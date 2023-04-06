@@ -108,11 +108,7 @@
         </v-row>
         <v-row align="start" class="mt-0">
           <v-col cols="3">
-            <VueDatePicker
-              v-model="this.editedEvent.date"
-              position="left"
-              type="date"
-            ></VueDatePicker>
+            <input type="date" name="test" />
             <!-- date -->
           </v-col>
           <v-col cols="3">
@@ -217,8 +213,6 @@
 <script>
 import SemesterDataService from "../../services/SemesterDataService";
 import EventDataService from "../../services/EventDataService";
-import VueDatePicker from "@vuepic/vue-datepicker";
-import "@vuepic/vue-datepicker/dist/main.css";
 import VueTimePicker from "vue3-timepicker";
 import "vue3-timepicker/dist/VueTimepicker.css";
 export default {
@@ -347,7 +341,7 @@ export default {
     editEvent(event) {},
     editEventConfirm() {},
   },
-  components: { VueDatePicker, "vue-timepicker": VueTimePicker },
+  components: { "vue-timepicker": VueTimePicker },
   async mounted() {
     await this.retrieveAllSemesters();
     await this.getCurrentSemester();
