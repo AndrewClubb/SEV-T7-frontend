@@ -140,7 +140,6 @@
             <!-- duration -->
           </v-col>
         </v-row>
-
         <v-row>
           <v-col>
             <v-select
@@ -148,6 +147,7 @@
               v-model="editedEvent.type"
               label="Type"
               :items="eventTypes"
+              variant="solo"
               return-object
             >
             </v-select>
@@ -155,6 +155,7 @@
           </v-col>
           <v-col>
             <v-text-field
+              variant="underlined"
               v-model="editedEvent.name"
               label="Name"
             ></v-text-field>
@@ -165,10 +166,11 @@
           <!-- if type is "other"-->
           <v-text-field
             v-model="eventOtherType"
+            variant="underlined"
             label="Please specify the event type"
           ></v-text-field>
         </v-row>
-        <v-row class="mt-15">
+        <v-row>
           Options
           <v-spacer></v-spacer>
         </v-row>
@@ -356,5 +358,10 @@ export default {
   justify-content: flex-start;
   align-items: center;
   height: 60px; /* set a height for the container */
+}
+input[type="date"] {
+  border: 1px solid lightgrey;
+  padding: 8px;
+  box-shadow: 0 3px 10px rgb(0 0 0 / 0.2);
 }
 </style>
