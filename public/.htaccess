@@ -3,9 +3,9 @@
 </IfModule>
 <IfModule mod_rewrite.c>
   RewriteEngine On 
-  RewriteBase /performance/t2/ 
+  RewriteBase /performance/t7/ 
   RewriteRule ^index\.html$ - [L] 
   RewriteCond %{REQUEST_FILENAME} !-f 
   RewriteCond %{REQUEST_FILENAME} !-d 
-  RewriteRule . /performance/t2/index.html [L]
+  RewriteRule . /performance/t7/index.html [L]
 </IfModule>
