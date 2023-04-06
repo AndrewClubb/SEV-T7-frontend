@@ -1,0 +1,75 @@
+{
+  "name": "sev-project1-frontend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "serve": "vite preview",
+    "build": "APP_ENV=production vite build",
+    "test:unit": "vitest --environment jsdom --root src/",
+    "test:e2e": "start-server-and-test preview :4173 'cypress run --e2e'",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
+    "dev": "cross-env APP_ENV=development vite",
+    "preview": "vite preview",
+    "test:e2e:dev": "start-server-and-test 'vite dev --port 4173' :4173 'cypress open --e2e'",
+    "bundle": "mv .env dist"
+  },
+  "dependencies": {
+    "@mdi/font": "5.9.55",
+    "roboto-fontface": "*",
+    "vue": "^3.2.45",
+    "vue-router": "^4.1.6",
+    "vuetify": "^3.1.7",
+    "webfontloader": "^1.0.0"
+  },
+  "devDependencies": {
+    "@rushstack/eslint-patch": "^1.1.4",
+    "@vitejs/plugin-vue": "^4.0.0",
+    "@vue/eslint-config-prettier": "^7.0.0",
+    "@vue/test-utils": "^2.2.6",
+    "cross-env": "^7.0.3",
+    "cypress": "^12.0.2",
+    "eslint": "^8.22.0",
+    "eslint-plugin-cypress": "^2.12.1",
+    "eslint-plugin-vue": "^9.3.0",
+    "jsdom": "^20.0.3",
+    "prettier": "^2.7.1",
+    "start-server-and-test": "^1.15.2",
+    "vite": "^4.0.0",
+    "vite-plugin-vuetify": "^1.0.0-alpha.12",
+    "vitest": "^0.25.6",
+    "vue-cli-plugin-vuetify": "~2.5.8"
+  },
+  "eslintConfig": {
+    "vue/no-v-for-template-key-on-child": "off"
+  },
+  "@vue/cli-plugin-eslint": {
+    "version": "3.3.0",
+    "resolved": "https://registry.npmjs.org/@vue/cli-plugin-eslint/-/cli-plugin-eslint-3.3.0.tgz",
+    "integrity": "sha512-kL68xVHv8xFqB06DmzACSviuNPaJcTvlKrCeZarxrXecry2MiOhbyiBToCQXiu2YhfxH8pUy3GFsSRyn3eYEuw==",
+    "requires": {
+      "@vue/cli-shared-utils": "^3.3.0",
+      "babel-eslint": "^10.0.1",
+      "eslint": "^4.19.1",
+      "eslint-loader": "^2.1.1",
+      "eslint-plugin-vue": "^4.7.1",
+      "globby": "^8.0.1"
+    },
+    "rules": {
+      "vue/no-v-for-template-key-on-child": "off"
+    }
+  },
+  "babel-eslint": {
+    "version": "10.0.1",
+    "resolved": "https://registry.npmjs.org/babel-eslint/-/babel-eslint-10.0.1.tgz",
+    "integrity": "sha512-z7OT1iNV+TjOwHNLLyJk+HN+YVWX+CLE6fPD2SymJZOZQBs+QIexFjhm4keGTm8MW9xr4EC9Q0PbaLB24V5GoQ==",
+    "requires": {
+      "@babel/code-frame": "^7.0.0",
+      "@babel/parser": "^7.0.0",
+      "@babel/traverse": "^7.0.0",
+      "@babel/types": "^7.0.0",
+      "eslint-scope": "3.7.1",
+      "eslint-visitor-keys": "^1.0.0"
+    }
+  }
+}
