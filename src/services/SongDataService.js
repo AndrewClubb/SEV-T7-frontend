@@ -1,6 +1,6 @@
 import http from "./services.js";
 class SongDataService {
-  baseUrl = "/performance-t2/song/";
+  baseUrl = "/performance-t7/song/";
 
   create(data) {
     return http.post(this.baseUrl, data);

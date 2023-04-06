@@ -1,6 +1,6 @@
 import http from "./services.js";
 class JurorTimeslotDataService {
-  baseUrl = "/performance-t2/jurorTimeslot/";
+  baseUrl = "/performance-t7/jurorTimeslot/";
 
   create(data) {
     return http.post(this.baseUrl, data);

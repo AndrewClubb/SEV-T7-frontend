@@ -1,6 +1,6 @@
 import http from "./services.js";
 class ComposerDataService {
-  baseUrl = "/performance-t2/composer/";
+  baseUrl = "/performance-t7/composer/";
 
   getAll() {
     return http.get(this.baseUrl);

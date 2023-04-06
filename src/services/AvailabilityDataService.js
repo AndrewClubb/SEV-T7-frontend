@@ -1,6 +1,6 @@
 import http from "./services.js";
 class AvailabilityDataService {
-  baseUrl = "/performance-t2/availability/";
+  baseUrl = "/performance-t7/availability/";
 
   create(data) {
     return http.post(this.baseUrl, data);

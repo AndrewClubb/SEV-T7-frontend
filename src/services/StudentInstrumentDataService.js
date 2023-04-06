@@ -1,6 +1,6 @@
 import http from "./services.js";
 class StudentInstrumentDataService {
-  baseUrl = "/performance-t2/studentInstrument/";
+  baseUrl = "/performance-t7/studentInstrument/";
 
   getAll() {
     return http.get(this.baseUrl);

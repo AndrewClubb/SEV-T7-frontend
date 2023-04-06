@@ -1,6 +1,6 @@
 import http from "./services.js";
 class SemesterDataService {
-  baseUrl = "/performance-t2/semester/";
+  baseUrl = "/performance-t7/semester/";
 
   getAll() {
     return http.get(this.baseUrl);

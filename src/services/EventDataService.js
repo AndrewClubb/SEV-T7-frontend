@@ -1,6 +1,6 @@
 import http from "./services.js";
 class EventDataService {
-  baseUrl = "/performance-t2/event/";
+  baseUrl = "/performance-t7/event/";
 
   getAll() {
     return http.get(this.baseUrl);

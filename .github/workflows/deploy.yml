@@ -36,4 +36,4 @@ jobs:
           SOURCE: "dist/"
           REMOTE_HOST: "perform.eaglesoftwareteam.com"
           REMOTE_USER: ubuntu
-          TARGET: "/var/www/html/performance/t2"
+          TARGET: "/var/www/html/performance/t7"

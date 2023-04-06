@@ -1,6 +1,6 @@
 import http from "./services.js";
 class RepertoireDataService {
-  baseUrl = "/performance-t2/repertoire/";
+  baseUrl = "/performance-t7/repertoire/";
 
   create(data) {
     return http.post(this.baseUrl, data);
