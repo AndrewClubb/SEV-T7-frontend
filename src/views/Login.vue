@@ -14,7 +14,7 @@
         align-self="center"
         height="50"
         width="50"
-        :src="OClogo"
+        :src="logoURL"
       ></v-img>
       <v-card-title> Welcome to the OC Music Department!</v-card-title>
       <v-card-subtitle>Log in to your account:</v-card-subtitle>
@@ -29,13 +29,17 @@
 <script>
 import OClogo from "/oc_logo_social.png";
 import SocialLogin from "../components/SocialLogin.vue";
+import { ref, onMounted } from "vue";
+const logoURL = ref("");
 export default {
   name: "LoginPage",
   components: {
     SocialLogin,
   },
-  mounted() {},
 };
+onMounted(() => {
+  logoURL.value = OClogo;
+});
 </script>
 
 <style scoped>

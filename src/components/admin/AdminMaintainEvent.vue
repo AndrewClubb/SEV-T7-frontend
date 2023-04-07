@@ -108,7 +108,7 @@
         </v-row>
         <v-row align="start" class="mt-0">
           <v-col cols="3">
-            <input type="date" name="test" />
+            <input type="date" v-model="this.editedEvent.date" />
             <!-- date -->
           </v-col>
           <v-col cols="3">
@@ -145,7 +145,7 @@
             <v-select
               clearable
               v-model="editedEvent.type"
-              label="Type"
+              label="Event Type"
               :items="eventTypes"
               variant="solo"
               return-object
@@ -157,33 +157,34 @@
             <v-text-field
               variant="underlined"
               v-model="editedEvent.name"
-              label="Name"
+              label="Event Name"
             ></v-text-field>
             <!-- Name -->
           </v-col>
         </v-row>
         <v-row v-if="this.editedEvent.type == 'Other'">
-          <!-- if type is "other"-->
-          <v-text-field
-            v-model="eventOtherType"
-            variant="underlined"
-            label="Please specify the event type"
-          ></v-text-field>
-        </v-row>
-        <v-row>
-          Options
-          <v-spacer></v-spacer>
-        </v-row>
-        <v-row>
-          <v-divider></v-divider>
+          <v-col cols="6">
+            <!-- if type is "other"-->
+            <v-text-field
+              v-model="eventOtherType"
+              variant="underlined"
+              label="Enter the event type here"
+            ></v-text-field>
+          </v-col>
         </v-row>
         <v-row>
           <v-col>
-            <v-checkbox></v-checkbox>
+            <v-checkbox
+              v-model="this.editedEvent.isVisible"
+              label="Any student can sign up for this event"
+            ></v-checkbox>
             <!-- visible -->
           </v-col>
           <v-col>
-            <v-checkbox></v-checkbox>
+            <v-checkbox
+              v-model="this.editedEvent.canMergeSlots"
+              label="Students can sign up for multiple timeslots"
+            ></v-checkbox>
             <!-- multiple TS slection -->
           </v-col>
         </v-row>
@@ -244,6 +245,7 @@ export default {
       ss: "00",
       a: "am",
     },
+    eventTypes: [],
     dialog: false,
     dialogDelete: false,
   }),
@@ -277,6 +279,18 @@ export default {
       await EventDataService.getBySemester(this.selectedSemester.id)
         .then((response) => {
           this.events = response.data;
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
+    async getAllEventTypes() {
+      await EventDataService.getEventTypes()
+        .then((response) => {
+          for (let i = 0; i < response.data.length; i++) {
+            this.eventTypes.push(response.data[i].type);
+          }
+          this.eventTypes.push("Other");
         })
         .catch((err) => {
           console.log(err);
@@ -322,7 +336,10 @@ export default {
     },
     addEvent() {
       this.editedEvent = {};
+      this.editedEvent.date = "2023-04-07";
       this.editedEvent.slotDuration = "10";
+      this.editedEvent.isVisible = true;
+      this.editedEvent.type = "Recital Hearing";
       this.eventOtherType = "";
       this.errorMessage = "";
       this.isEdit = false;
@@ -348,6 +365,7 @@ export default {
     await this.retrieveAllSemesters();
     await this.getCurrentSemester();
     await this.semesterUpdated();
+    this.getAllEventTypes();
   },
 };
 </script>

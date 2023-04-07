@@ -34,5 +34,9 @@ class EventDataService {
   getBySemester(semesterId) {
     return http.get(this.baseUrl + `semesterId/${semesterId}`);
   }
+
+  getEventTypes() {
+    return http.get(this.baseUrl + "types/unique");
+  }
 }
 export default new EventDataService();
