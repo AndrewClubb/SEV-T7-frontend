@@ -13,9 +13,11 @@ class CritiqueDataService {
   update(id, data) {
     return http.put(this.baseUrl + id, data);
   }
+
   delete(id) {
     return http.delete(this.baseUrl + id);
   }
+
   deleteAll() {
     return http.delete(this.baseUrl);
   }
