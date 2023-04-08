@@ -49,7 +49,7 @@
                 mdi-pencil
               </v-icon>
               <v-icon
-                v-if="this.isAfterNow(item.raw)"
+                v-if="this.isAfterNow(item.raw.date)"
                 size="small"
                 @click="deleteEvent(item.raw)"
               >
@@ -108,20 +108,24 @@
         </v-row>
         <v-row align="start" class="mt-0">
           <v-col cols="3">
-            <input type="date" v-model="this.editedEvent.date" />
+            <input type="date" v-model="editedEvent.date" />
             <!-- date -->
           </v-col>
           <v-col cols="3">
             <vue-timepicker
               :format="timeFormat"
-              v-model="timeData"
+              v-model="startTimeData"
+              :minute-interval="editedEvent.slotDuration"
+              ><template v-slot:clearButton><img /> </template
             ></vue-timepicker>
             <!-- start -->
           </v-col>
           <v-col cols="3">
             <vue-timepicker
               :format="timeFormat"
-              v-model="timeData"
+              v-model="endTimeData"
+              :minute-interval="editedEvent.slotDuration"
+              ><template v-slot:clearButton><img /> </template
             ></vue-timepicker>
             <!-- end -->
           </v-col>
@@ -129,7 +133,7 @@
           <v-col cols="3">
             <v-select
               density="compact"
-              v-model="this.editedEvent.slotDuration"
+              v-model="editedEvent.slotDuration"
               variant="solo"
               :items="[5, 10, 15]"
             >
@@ -143,7 +147,6 @@
         <v-row>
           <v-col>
             <v-select
-              clearable
               v-model="editedEvent.type"
               label="Event Type"
               :items="eventTypes"
@@ -162,7 +165,7 @@
             <!-- Name -->
           </v-col>
         </v-row>
-        <v-row v-if="this.editedEvent.type == 'Other'">
+        <v-row v-if="this.editedEvent.type === 'Other'">
           <v-col cols="6">
             <!-- if type is "other"-->
             <v-text-field
@@ -175,8 +178,8 @@
         <v-row>
           <v-col>
             <v-checkbox
-              v-model="this.editedEvent.isVisible"
-              label="Any student can sign up for this event"
+              v-model="this.editedEvent.isPrivateEvent"
+              label="Private event (ex. Senior Recital)"
             ></v-checkbox>
             <!-- visible -->
           </v-col>
@@ -226,7 +229,7 @@ export default {
     events: [],
     eventHeaders: [
       { title: "Date", key: "date" },
-      { title: "Title", key: "title" },
+      { title: "Name", key: "name" },
       { title: "Type", key: "type" },
       { title: "Start Time", key: "startTime" },
       { title: "End Time", key: "endTime" },
@@ -239,12 +242,7 @@ export default {
     eventTypes: [],
     eventOtherType: null,
     timeFormat: "hh:mm a",
-    timeData: {
-      hh: "09",
-      mm: "15",
-      ss: "00",
-      a: "am",
-    },
+    startTimeData: null,
     eventTypes: [],
     dialog: false,
     dialogDelete: false,
@@ -315,11 +313,31 @@ export default {
         minute: "numeric",
       });
     },
-    isAfterNow(event) {
-      let eventDate = new Date(event.date).getTime();
-      let today = new Date().getTime();
+    isAfterNow(input) {
+      const dateParts = input.split("-");
+      const eventDate = new Date(
+        Date.UTC(
+          parseInt(dateParts[0]),
+          parseInt(dateParts[1]) - 1,
+          parseInt(dateParts[2])
+        )
+      );
 
-      return eventDate > today;
+      const today = new Date();
+      const utcDate = new Date(
+        Date.UTC(
+          today.getUTCFullYear(),
+          today.getUTCMonth(),
+          today.getUTCDate()
+        )
+      );
+
+      return (
+        eventDate.getTime() > utcDate.getTime() ||
+        (eventDate.getFullYear() === utcDate.getFullYear() &&
+          eventDate.getMonth() === utcDate.getMonth() &&
+          eventDate.getDate() === utcDate.getDate())
+      );
     },
     deleteEvent(event) {
       this.editedEvent = event;
@@ -335,18 +353,89 @@ export default {
       });
     },
     addEvent() {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = (today.getMonth() + 1).toString().padStart(2, "0");
+      const day = today.getDate().toString().padStart(2, "0");
+
       this.editedEvent = {};
-      this.editedEvent.date = "2023-04-07";
+      this.editedEvent.date = `${year}-${month}-${day}`;
+      this.startTimeData = {
+        hh: "10",
+        mm: "00",
+        a: "am",
+      };
+      this.endTimeData = {
+        hh: "02",
+        mm: "30",
+        a: "pm",
+      };
       this.editedEvent.slotDuration = "10";
-      this.editedEvent.isVisible = true;
       this.editedEvent.type = "Recital Hearing";
-      this.eventOtherType = "";
+      this.eventOtherType = null;
       this.errorMessage = "";
       this.isEdit = false;
       this.dialog = true;
     },
+    isValid(startTime, endTime) {
+      var result = true;
+
+      if (!this.isEdit) {
+        //selected date is after today
+        if (!this.isAfterNow(this.editedEvent.date)) {
+          result = false;
+          this.errorMessage = "The selected date has already passed";
+        }
+        //end time is before start time
+        else if (startTime > endTime) {
+          result = false;
+          this.errorMessage = "End time cannot be before the start time";
+        }
+        //end time being the same as start
+        else if (startTime === endTime) {
+          result = false;
+          this.errorMessage = "End time cannot be the same as the start time";
+        }
+        //event type (other)
+        else if (
+          this.editedEvent.type === "Other" &&
+          this.eventOtherType == null
+        ) {
+          result = false;
+          this.errorMessage = "Event type must be entered";
+        }
+        //event name
+        else if (
+          this.editedEvent.name == null ||
+          this.editedEvent.name == undefined
+        ) {
+          result = false;
+          this.errorMessage = "Name cannot be empty";
+        }
+      }
+      return result;
+    },
     addEventConfirm() {
-      // validate
+      var startTime, endTime;
+      if (this.startTimeData.a === "am") {
+        startTime = `${this.startTimeData.hh}:${this.startTimeData.mm}:00`;
+      } else {
+        startTime = `${Number(this.startTimeData.hh) + 12}:${
+          this.startTimeData.mm
+        }:00`;
+      }
+
+      if (this.endTimeData.a === "am") {
+        endTime = `${this.endTimeData.hh}:${this.endTimeData.mm}:00`;
+      } else {
+        endTime = `${Number(this.endTimeData.hh) + 12}:${
+          this.endTimeData.mm
+        }:00`;
+      }
+
+      if (!this.isValid(startTime, endTime)) {
+        return;
+      }
 
       // create event
 
