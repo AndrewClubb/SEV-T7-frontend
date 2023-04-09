@@ -315,30 +315,12 @@ export default {
       });
     },
     isAfterNow(input) {
-      const dateParts = input.split("-");
-      const eventDate = new Date(
-        Date.UTC(
-          parseInt(dateParts[0]),
-          parseInt(dateParts[1]) - 1,
-          parseInt(dateParts[2])
-        )
-      );
-
       const today = new Date();
-      const utcDate = new Date(
-        Date.UTC(
-          today.getUTCFullYear(),
-          today.getUTCMonth(),
-          today.getUTCDate()
-        )
-      );
+      const todayString = `${today.getFullYear()}-${(today.getMonth() + 1)
+        .toString()
+        .padStart(2, "0")}-${today.getDate().toString().padStart(2, "0")}`;
 
-      return (
-        eventDate.getTime() > utcDate.getTime() ||
-        (eventDate.getFullYear() === utcDate.getFullYear() &&
-          eventDate.getMonth() === utcDate.getMonth() &&
-          eventDate.getDate() === utcDate.getDate())
-      );
+      return input >= todayString;
     },
     deleteEvent(event) {
       this.editedEvent = event;
