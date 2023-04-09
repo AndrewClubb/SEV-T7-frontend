@@ -219,6 +219,7 @@
 <script>
 import SemesterDataService from "../../services/SemesterDataService";
 import EventDataService from "../../services/EventDataService";
+import EventTimeDataService from "../../services/EventTimeDataService";
 import VueTimePicker from "vue3-timepicker";
 import "vue3-timepicker/dist/VueTimepicker.css";
 export default {
@@ -372,6 +373,8 @@ export default {
       };
       this.editedEvent.slotDuration = "10";
       this.editedEvent.type = "Recital Hearing";
+      this.editedEvent.isPrivateEvent = false;
+      this.editedEvent.canMergeSlots = false;
       this.eventOtherType = null;
       this.errorMessage = "";
       this.isEdit = false;
@@ -415,8 +418,8 @@ export default {
       }
       return result;
     },
-    addEventConfirm() {
-      var startTime, endTime;
+    async addEventConfirm() {
+      var startTime, endTime, eventId;
       if (this.startTimeData.a === "am") {
         startTime = `${this.startTimeData.hh}:${this.startTimeData.mm}:00`;
       } else {
@@ -437,11 +440,61 @@ export default {
         return;
       }
 
-      // create event
+      this.editedEvent.startTime = startTime;
+      this.editedEvent.endTime = endTime;
+      this.editedEvent.semesterId = this.selectedSemester.id;
+      if (this.editedEvent.type === "Other") {
+        this.editedEvent.type = this.eventOtherType;
+      }
+
+      await EventDataService.create(this.editedEvent)
+        .then((response) => {
+          eventId = response.data.id;
+        })
+        .catch((err) => {
+          console.log(err);
+        });
 
       // create event TS
+      let tempStartTime = startTime;
+      let tempEndTime = this.addDurationMinutes(tempStartTime);
+
+      while (tempEndTime <= endTime) {
+        const tsData = {
+          startTime: tempStartTime,
+          endTime: tempEndTime,
+          isReserved: false,
+          eventId: eventId,
+        };
+
+        await EventTimeDataService.create(tsData).catch((err) => {
+          console.log(err);
+        });
+
+        tempStartTime = tempEndTime;
+        tempEndTime = this.addDurationMinutes(tempEndTime);
+      }
+
+      this.semesterUpdated();
 
       this.closeDialog();
+    },
+    addDurationMinutes(time) {
+      let timeSplit = time.split(":");
+      let hour = Number(timeSplit[0]);
+      let minute = Number(timeSplit[1]) + Number(this.editedEvent.slotDuration);
+
+      if (minute >= "60") {
+        hour++;
+        minute -= 60;
+      }
+
+      return (
+        hour.toString().padStart(2, "0") +
+        ":" +
+        minute.toString().padStart(2, "0") +
+        ":00"
+      );
     },
     closeDialog() {
       this.dialog = false;
