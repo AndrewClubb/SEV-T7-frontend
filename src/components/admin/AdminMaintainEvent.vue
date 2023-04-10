@@ -49,7 +49,7 @@
                 mdi-pencil
               </v-icon>
               <v-icon
-                v-if="this.isAfterNow(item.raw.date)"
+                v-if="this.compareDates(item.raw.date) > 0"
                 size="small"
                 @click="deleteEvent(item.raw)"
               >
@@ -314,19 +314,31 @@ export default {
         minute: "numeric",
       });
     },
-    isAfterNow(input) {
+    compareDates(input) {
       const today = new Date();
       const todayString = `${today.getFullYear()}-${(today.getMonth() + 1)
         .toString()
         .padStart(2, "0")}-${today.getDate().toString().padStart(2, "0")}`;
 
-      return input >= todayString;
+      if (input > todayString) {
+        return 1;
+      } else if (input == todayString) {
+        return 0;
+      } else {
+        return -1;
+      }
     },
     deleteEvent(event) {
       this.editedEvent = event;
       this.dialogDelete = true;
     },
     async deleteEventConfirm() {
+      await EventDataService.remove(this.editedEvent.id).catch((err) => {
+        console.log(err);
+      });
+
+      this.semesterUpdated();
+
       this.closeDelete();
     },
     closeDelete() {
@@ -367,7 +379,7 @@ export default {
 
       if (!this.isEdit) {
         //selected date is after today
-        if (!this.isAfterNow(this.editedEvent.date)) {
+        if (!this.compareDates(this.editedEvent.date) < 0) {
           result = false;
           this.errorMessage = "The selected date has already passed";
         }

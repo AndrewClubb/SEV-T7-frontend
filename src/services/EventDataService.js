@@ -5,12 +5,17 @@ class EventDataService {
   getAll() {
     return http.get(this.baseUrl);
   }
+
   getGTEDate(date) {
     return http.get(this.baseUrl + `date/${date}`);
   }
 
   create(data) {
     return http.post(this.baseUrl, data);
+  }
+
+  remove(id) {
+    return http.delete(this.baseUrl + id);
   }
 
   createCritique(data) {
