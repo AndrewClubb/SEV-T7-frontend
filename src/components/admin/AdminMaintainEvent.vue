@@ -395,7 +395,7 @@ export default {
     isValid(startTime, endTime) {
       var result = true;
       //selected date is after today
-      if (this.compareDates(this.editedEvent.date) < 0) {
+      if (!this.isEdit && this.compareDates(this.editedEvent.date) < 0) {
         result = false;
         this.errorMessage = "The selected date has already passed";
       }
