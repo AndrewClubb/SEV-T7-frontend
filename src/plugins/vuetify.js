@@ -8,6 +8,8 @@ const myCustomTheme = {
     primary: "#80162B",
     cream: "#DADADA",
     secondary: "262626",
+    // light: "FBFBFB",
+    fav: "d2f0ee",
   },
 };
 

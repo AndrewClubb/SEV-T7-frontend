@@ -56,7 +56,7 @@ export default defineComponent({
           title: "Student",
           links: [
             { link: "View Repertoire", route: "studentRepertoire" },
-            { link: "Upcoming Events", route: "studentViewEvents" },
+            { link: "Your Upcoming Events", route: "studentViewEvents" },
             { link: "Event Sign-Ups", route: "studentEventSignUps" },
             { link: "View Your Critiques", route: "studentCritiques" },
             { link: "Event Recordings", route: "studentRecordings" },
