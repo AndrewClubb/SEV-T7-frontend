@@ -227,6 +227,30 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
+  <v-dialog v-model="confirmPastEvent" max-width="700px">
+    <v-card>
+      <v-card-title class="text-h5"
+        >Are you sure you want to update this event to be in the
+        past?</v-card-title
+      >
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn
+          color="blue-darken-1"
+          variant="text"
+          @click="confirmPastEvent = false"
+          >Cancel</v-btn
+        >
+        <v-btn
+          color="blue-darken-1"
+          variant="text"
+          @click="runEditEventCommands"
+          >I am sure</v-btn
+        >
+        <v-spacer></v-spacer>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 <script>
 import SemesterDataService from "../../services/SemesterDataService";
@@ -262,6 +286,7 @@ export default {
     dialogDelete: false,
     isEdit: null,
     dateCompareResult: null,
+    confirmPastEvent: false,
   }),
   methods: {
     async retrieveAllSemesters() {
@@ -574,6 +599,40 @@ export default {
         return;
       }
 
+      if (
+        this.editedEvent.date != this.originalEvent.date &&
+        this.compareDates(this.editedEvent.date) < 0
+      ) {
+        this.confirmPastEvent = true;
+      } else {
+        this.runEditEventCommands();
+      }
+    },
+    async runEditEventCommands() {
+      this.confirmPastEvent = false;
+      var startTime, endTime;
+      if (this.startTimeData.a === "am" && this.startTimeData.hh === "12") {
+        startTime = `00:${this.startTimeData.mm}:00`;
+      } else if (
+        this.startTimeData.a === "am" ||
+        this.startTimeData.hh === "12"
+      ) {
+        startTime = `${this.startTimeData.hh}:${this.startTimeData.mm}:00`;
+      } else {
+        startTime = `${Number(this.startTimeData.hh) + 12}:${
+          this.startTimeData.mm
+        }:00`;
+      }
+
+      if (this.endTimeData.a === "am" && this.endTimeData.hh === "12") {
+        endTime = `00:${this.endTimeData.mm}:00`;
+      } else if (this.endTimeData.a === "am" || this.endTimeData.hh === "12") {
+        endTime = `${this.endTimeData.hh}:${this.endTimeData.mm}:00`;
+      } else {
+        endTime = `${Number(this.endTimeData.hh) + 12}:${
+          this.endTimeData.mm
+        }:00`;
+      }
       // Get all TS for eventId
       var timeslots = [];
       await EventTimeDataService.getByEvent(this.editedEvent.id)
