@@ -395,7 +395,7 @@ export default {
     isValid(startTime, endTime) {
       var result = true;
       //selected date is after today
-      if (!this.compareDates(this.editedEvent.date) < 0) {
+      if (this.compareDates(this.editedEvent.date) < 0) {
         result = false;
         this.errorMessage = "The selected date has already passed";
       }
@@ -420,7 +420,8 @@ export default {
       //event name
       else if (
         this.editedEvent.name == null ||
-        this.editedEvent.name == undefined
+        this.editedEvent.name == undefined ||
+        this.editedEvent.name === ""
       ) {
         result = false;
         this.errorMessage = "Name cannot be empty";
