@@ -6,6 +6,10 @@ class EventTimeDataService {
     return http.post(this.baseUrl, data);
   }
 
+  remove(dataId) {
+    return http.delete(this.baseUrl + dataId);
+  }
+
   getAll() {
     return http.get(this.baseUrl);
   }

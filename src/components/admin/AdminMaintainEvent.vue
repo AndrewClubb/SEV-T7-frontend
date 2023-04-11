@@ -84,8 +84,10 @@
   <v-dialog v-model="dialog" max-width="750px">
     <v-card>
       <v-card-title>
-        <div v-if="isEdit">Edit Event</div>
-        <div v-else>New Event</div>
+        <div v-if="!this.isEdit">New Event</div>
+        <div v-else-if="this.dateCompareResult == '1'">Edit Upcoming Event</div>
+        <div v-else-if="this.dateCompareResult == '0'">Edit Today's Event</div>
+        <div v-else>Edit Past Event</div>
       </v-card-title>
       <v-card-text>
         <v-row>
@@ -108,7 +110,11 @@
         </v-row>
         <v-row align="start" class="mt-0">
           <v-col cols="3">
-            <input type="date" v-model="editedEvent.date" />
+            <input
+              type="date"
+              v-model="editedEvent.date"
+              :disabled="this.isEdit && this.dateCompareResult == '-1'"
+            />
             <!-- date -->
           </v-col>
           <v-col cols="3">
@@ -116,7 +122,8 @@
               :format="timeFormat"
               v-model="startTimeData"
               :minute-interval="editedEvent.slotDuration"
-              ><template v-slot:clearButton><img /> </template
+              hide-clear-button
+              :disabled="this.isEdit && this.dateCompareResult == '-1'"
             ></vue-timepicker>
             <!-- start -->
           </v-col>
@@ -125,7 +132,8 @@
               :format="timeFormat"
               v-model="endTimeData"
               :minute-interval="editedEvent.slotDuration"
-              ><template v-slot:clearButton><img /> </template
+              hide-clear-button
+              :disabled="this.isEdit && this.dateCompareResult == '-1'"
             ></vue-timepicker>
             <!-- end -->
           </v-col>
@@ -135,6 +143,7 @@
               density="compact"
               v-model="editedEvent.slotDuration"
               variant="solo"
+              :disabled="this.isEdit && this.dateCompareResult == '-1'"
               :items="[5, 10, 15]"
             >
               <template v-slot:selection="{ item, index }">
@@ -152,6 +161,7 @@
               :items="eventTypes"
               variant="solo"
               return-object
+              :disabled="this.isEdit && this.dateCompareResult == '-1'"
             >
             </v-select>
             <!-- Type -->
@@ -180,6 +190,7 @@
             <v-checkbox
               v-model="this.editedEvent.isPrivateEvent"
               label="Private event (ex. Senior Recital)"
+              :disabled="this.isEdit && this.dateCompareResult == '-1'"
             ></v-checkbox>
             <!-- visible -->
           </v-col>
@@ -187,6 +198,7 @@
             <v-checkbox
               v-model="this.editedEvent.canMergeSlots"
               label="Students can sign up for multiple timeslots"
+              :disabled="this.isEdit && this.dateCompareResult == '-1'"
             ></v-checkbox>
             <!-- multiple TS slection -->
           </v-col>
@@ -198,17 +210,17 @@
           >Cancel</v-btn
         >
         <v-btn
+          v-if="!this.isEdit"
           color="blue-darken-1"
           variant="text"
           @click="addEventConfirm"
-          v-if="!isEdit"
           >CREATE</v-btn
         >
         <v-btn
+          v-else
           color="blue-darken-1"
           variant="text"
           @click="editEventConfirm"
-          v-else
           >SAVE</v-btn
         >
         <v-spacer></v-spacer>
@@ -237,16 +249,19 @@ export default {
       { title: "Actions", sortable: false, allign: "end" },
     ],
     editedEvent: {},
+    originalEvent: {},
     selectedEvent: {},
-    isEdit: false,
     errorMessage: "",
     eventTypes: [],
     eventOtherType: null,
     timeFormat: "hh:mm a",
     startTimeData: null,
+    endTimeData: null,
     eventTypes: [],
     dialog: false,
     dialogDelete: false,
+    isEdit: null,
+    dateCompareResult: null,
   }),
   methods: {
     async retrieveAllSemesters() {
@@ -284,6 +299,7 @@ export default {
         });
     },
     async getAllEventTypes() {
+      this.eventTypes = [];
       await EventDataService.getEventTypes()
         .then((response) => {
           for (let i = 0; i < response.data.length; i++) {
@@ -333,11 +349,13 @@ export default {
       this.dialogDelete = true;
     },
     async deleteEventConfirm() {
-      await EventDataService.remove(this.editedEvent.id).catch((err) => {
-        console.log(err);
-      });
-
-      this.semesterUpdated();
+      EventDataService.remove(this.editedEvent.id)
+        .then((data) => {
+          this.semesterUpdated();
+        })
+        .catch((err) => {
+          console.log(err);
+        });
 
       this.closeDelete();
     },
@@ -376,40 +394,38 @@ export default {
     },
     isValid(startTime, endTime) {
       var result = true;
-
-      if (!this.isEdit) {
-        //selected date is after today
-        if (!this.compareDates(this.editedEvent.date) < 0) {
-          result = false;
-          this.errorMessage = "The selected date has already passed";
-        }
-        //end time is before start time
-        else if (startTime > endTime) {
-          result = false;
-          this.errorMessage = "End time cannot be before the start time";
-        }
-        //end time being the same as start
-        else if (startTime === endTime) {
-          result = false;
-          this.errorMessage = "End time cannot be the same as the start time";
-        }
-        //event type (other)
-        else if (
-          this.editedEvent.type === "Other" &&
-          this.eventOtherType == null
-        ) {
-          result = false;
-          this.errorMessage = "Event type must be entered";
-        }
-        //event name
-        else if (
-          this.editedEvent.name == null ||
-          this.editedEvent.name == undefined
-        ) {
-          result = false;
-          this.errorMessage = "Name cannot be empty";
-        }
+      //selected date is after today
+      if (!this.compareDates(this.editedEvent.date) < 0) {
+        result = false;
+        this.errorMessage = "The selected date has already passed";
       }
+      //end time is before start time
+      else if (startTime > endTime) {
+        result = false;
+        this.errorMessage = "End time cannot be before the start time";
+      }
+      //end time being the same as start
+      else if (startTime === endTime) {
+        result = false;
+        this.errorMessage = "End time cannot be the same as the start time";
+      }
+      //event type (other)
+      else if (
+        this.editedEvent.type === "Other" &&
+        this.eventOtherType == null
+      ) {
+        result = false;
+        this.errorMessage = "Event type must be entered";
+      }
+      //event name
+      else if (
+        this.editedEvent.name == null ||
+        this.editedEvent.name == undefined
+      ) {
+        result = false;
+        this.errorMessage = "Name cannot be empty";
+      }
+
       return result;
     },
     async addEventConfirm() {
@@ -470,7 +486,7 @@ export default {
       }
 
       this.semesterUpdated();
-
+      this.getAllEventTypes();
       this.closeDialog();
     },
     addDurationMinutes(time) {
@@ -493,8 +509,145 @@ export default {
     closeDialog() {
       this.dialog = false;
     },
-    editEvent(event) {},
-    editEventConfirm() {},
+    editEvent(event) {
+      var startStrArr = event.startTime.split(":");
+      var endStrArr = event.endTime.split(":");
+      this.editedEvent = Object.assign({}, event);
+      this.originalEvent = event;
+      this.dateCompareResult = this.compareDates(event.date);
+
+      this.startTimeData = {
+        hh:
+          startStrArr[0] > "12"
+            ? (Number(startStrArr[0]) - 12).toString().padStart(2, "0")
+            : startStrArr[0],
+        mm: startStrArr[1],
+        a: startStrArr[0] > "12" ? "pm" : "am",
+      };
+      this.endTimeData = {
+        hh:
+          endStrArr[0] > "12"
+            ? (Number(endStrArr[0]) - 12).toString().padStart(2, "0")
+            : endStrArr[0],
+        mm: endStrArr[1],
+        a: endStrArr[0] > "12" ? "pm" : "am",
+      };
+
+      this.errorMessage = null;
+      this.isEdit = true;
+      this.dialog = true;
+    },
+    async editEventConfirm() {
+      var startTime, endTime;
+      if (this.startTimeData.a === "am") {
+        startTime = `${this.startTimeData.hh}:${this.startTimeData.mm}:00`;
+      } else {
+        startTime = `${Number(this.startTimeData.hh) + 12}:${
+          this.startTimeData.mm
+        }:00`;
+      }
+
+      if (this.endTimeData.a === "am") {
+        endTime = `${this.endTimeData.hh}:${this.endTimeData.mm}:00`;
+      } else {
+        endTime = `${Number(this.endTimeData.hh) + 12}:${
+          this.endTimeData.mm
+        }:00`;
+      }
+
+      if (!this.isValid(startTime, endTime)) {
+        return;
+      }
+
+      // Get all TS for eventId
+      var timeslots = [];
+      await EventTimeDataService.getByEvent(this.editedEvent.id)
+        .then((data) => {
+          timeslots = data.data;
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+
+      this.editedEvent.startTime = startTime;
+      this.editedEvent.endTime = endTime;
+      if (this.editedEvent.type === "Other") {
+        this.editedEvent.type = this.eventOtherType;
+      }
+
+      await EventDataService.update(this.editedEvent).catch((err) => {
+        console.log(err);
+      });
+
+      if (
+        this.originalEvent.startTime != startTime ||
+        this.originalEvent.endTime != endTime ||
+        this.originalEvent.slotDuration != this.editedEvent.slotDuration
+      ) {
+        if (this.originalEvent.slotDuration != this.editedEvent.slotDuration) {
+          for (let i = 0; i < timeslots.length; i++) {
+            await EventTimeDataService.remove(timeslots[i].id).catch((err) => {
+              console.log(err);
+            });
+          }
+          let tempStartTime = startTime;
+          let tempEndTime = this.addDurationMinutes(tempStartTime);
+          while (tempEndTime <= endTime) {
+            const tsData = {
+              startTime: tempStartTime,
+              endTime: tempEndTime,
+              isReserved: false,
+              eventId: this.editedEvent.id,
+            };
+            await EventTimeDataService.create(tsData).catch((err) => {
+              console.log(err);
+            });
+            tempStartTime = tempEndTime;
+            tempEndTime = this.addDurationMinutes(tempEndTime);
+          }
+        } else {
+          for (let i = 0; i < timeslots.length; i++) {
+            if (
+              timeslots[i].startTime < startTime ||
+              timeslots[i].endTime > endTime
+            ) {
+              await EventTimeDataService.remove(timeslots[i].id).catch(
+                (err) => {
+                  console.log(err);
+                }
+              );
+            }
+          }
+          let tempStartTime = startTime;
+          let tempEndTime = this.addDurationMinutes(tempStartTime);
+          while (tempEndTime <= endTime) {
+            //update condition to varify new TS doesn't already exist
+            if (
+              timeslots.findIndex(
+                (obj) =>
+                  obj.startTime === tempStartTime && obj.endTime === tempEndTime
+              ) == -1
+            ) {
+              const tsData = {
+                startTime: tempStartTime,
+                endTime: tempEndTime,
+                isReserved: false,
+                eventId: this.editedEvent.id,
+              };
+              await EventTimeDataService.create(tsData).catch((err) => {
+                console.log(err);
+              });
+            }
+            tempStartTime = tempEndTime;
+            tempEndTime = this.addDurationMinutes(tempEndTime);
+          }
+        }
+      }
+
+      await this.semesterUpdated();
+      this.getAllEventTypes();
+      this.closeDialog();
+    },
   },
   components: { "vue-timepicker": VueTimePicker },
   async mounted() {

@@ -6,6 +6,10 @@ class EventDataService {
     return http.get(this.baseUrl);
   }
 
+  update(data) {
+    return http.put(this.baseUrl + `${data.id}`, data);
+  }
+
   getGTEDate(date) {
     return http.get(this.baseUrl + `date/${date}`);
   }
