@@ -5,12 +5,21 @@ class EventDataService {
   getAll() {
     return http.get(this.baseUrl);
   }
+
+  update(data) {
+    return http.put(this.baseUrl + `${data.id}`, data);
+  }
+
   getGTEDate(date) {
     return http.get(this.baseUrl + `date/${date}`);
   }
 
   create(data) {
     return http.post(this.baseUrl, data);
+  }
+
+  remove(id) {
+    return http.delete(this.baseUrl + id);
   }
 
   createCritique(data) {
@@ -29,6 +38,14 @@ class EventDataService {
     return http.get(
       this.baseUrl + "semesterCritiques/" + semesterId + "/user/" + userId
     );
+  }
+
+  getBySemester(semesterId) {
+    return http.get(this.baseUrl + `semesterId/${semesterId}`);
+  }
+
+  getEventTypes() {
+    return http.get(this.baseUrl + "types/unique");
   }
 }
 export default new EventDataService();
