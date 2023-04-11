@@ -93,8 +93,20 @@
             <v-card>
               <v-sheet max-height="400" class="overflow-y-auto" color="fav">
                 <v-row>
-                  <v-col cols="6">
+                  <v-col
+                    v-for="event in events"
+                    :key="event.id"
+                    v-on:click="changeCurrentEvent(event)"
+                    variant="tonal"
+                    v-bind:color="
+                      event.id === currentEvent.id ? 'blue' : 'cyan-darken-2'
+                    "
+                    cols="6"
+                  >
                     <v-btn size="x-large" elevation="5" class="p-3 ma-2">
+                      12:00 - 12:05
+                    </v-btn>
+                    <!-- <v-btn size="x-large" elevation="5" class="p-3 ma-2">
                       12:00 - 12:05
                     </v-btn>
                     <v-btn size="x-large" elevation="5" class="p-3 ma-2">
@@ -104,8 +116,6 @@
                       size="x-large"
                       elevation="5"
                       class="p-3 ma-2"
-                      @click="changeColor"
-                      :style="{ backgroundColor: buttonColor }"
                     >
                       12:20 - 12:25
                     </v-btn>
@@ -148,7 +158,7 @@
                     </v-btn>
                     <v-btn size="x-large" elevation="5" class="p-3 ma-2">
                       01:10 - 01:15
-                    </v-btn>
+                    </v-btn> -->
                   </v-col>
                 </v-row>
               </v-sheet>
@@ -435,19 +445,18 @@ export default {
     selectedStudentInstrument: null,
     composerSearch: null,
     transBool: false,
-
-    // selectedEvent: null,
-    // currentEvent: {},
-    // currentEventTimes: [],
-    // selectedEventTimes: [],
+    //maybe
+    selectedEvent: null,
+    currentEvent: {},
+    currentEventTimes: [],
+    selectedEventTimes: [],
     // currentDate: new Date(),
   }),
   methods: {
-    // changeCurrentEvent(event) {
-    //   this.currentEvent = event;
-    //   this.determineEventTimes();
-    //   // console.log(this.currentEvent.id);
-    // },
+    changeCurrentEvent(event) {
+      this.currentEvent = event;
+      this.determineEventTimes();
+    },
     async retrieveEventsDateAndAfter(date) {
       await EventDataService.getGTEDate(date)
         .then((response) => {
