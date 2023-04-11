@@ -430,7 +430,12 @@ export default {
     },
     async addEventConfirm() {
       var startTime, endTime, eventId;
-      if (this.startTimeData.a === "am") {
+      if (this.startTimeData.a === "am" && this.startTimeData.hh === "12") {
+        startTime = `00:${this.startTimeData.mm}:00`;
+      } else if (
+        this.startTimeData.a === "am" ||
+        this.startTimeData.hh === "12"
+      ) {
         startTime = `${this.startTimeData.hh}:${this.startTimeData.mm}:00`;
       } else {
         startTime = `${Number(this.startTimeData.hh) + 12}:${
@@ -438,7 +443,9 @@ export default {
         }:00`;
       }
 
-      if (this.endTimeData.a === "am") {
+      if (this.endTimeData.a === "am" && this.endTimeData.hh === "12") {
+        endTime = `00:${this.endTimeData.mm}:00`;
+      } else if (this.endTimeData.a === "am" || this.endTimeData.hh === "12") {
         endTime = `${this.endTimeData.hh}:${this.endTimeData.mm}:00`;
       } else {
         endTime = `${Number(this.endTimeData.hh) + 12}:${
@@ -522,7 +529,7 @@ export default {
             ? (Number(startStrArr[0]) - 12).toString().padStart(2, "0")
             : startStrArr[0],
         mm: startStrArr[1],
-        a: startStrArr[0] > "12" ? "pm" : "am",
+        a: startStrArr[0] >= "12" ? "pm" : "am",
       };
       this.endTimeData = {
         hh:
@@ -530,7 +537,7 @@ export default {
             ? (Number(endStrArr[0]) - 12).toString().padStart(2, "0")
             : endStrArr[0],
         mm: endStrArr[1],
-        a: endStrArr[0] > "12" ? "pm" : "am",
+        a: endStrArr[0] >= "12" ? "pm" : "am",
       };
 
       this.errorMessage = null;
@@ -539,7 +546,12 @@ export default {
     },
     async editEventConfirm() {
       var startTime, endTime;
-      if (this.startTimeData.a === "am") {
+      if (this.startTimeData.a === "am" && this.startTimeData.hh === "12") {
+        startTime = `00:${this.startTimeData.mm}:00`;
+      } else if (
+        this.startTimeData.a === "am" ||
+        this.startTimeData.hh === "12"
+      ) {
         startTime = `${this.startTimeData.hh}:${this.startTimeData.mm}:00`;
       } else {
         startTime = `${Number(this.startTimeData.hh) + 12}:${
@@ -547,7 +559,9 @@ export default {
         }:00`;
       }
 
-      if (this.endTimeData.a === "am") {
+      if (this.endTimeData.a === "am" && this.endTimeData.hh === "12") {
+        endTime = `00:${this.endTimeData.mm}:00`;
+      } else if (this.endTimeData.a === "am" || this.endTimeData.hh === "12") {
         endTime = `${this.endTimeData.hh}:${this.endTimeData.mm}:00`;
       } else {
         endTime = `${Number(this.endTimeData.hh) + 12}:${
