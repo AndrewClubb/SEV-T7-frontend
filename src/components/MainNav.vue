@@ -1,110 +1,215 @@
 <template>
-  <v-container fluid class="fill-height bg-primary">
-    <v-row class="fill-height pa-0 ma-0" justify="center">
-      <v-col class="pa-0 ma-0">
-        <v-expansion-panels variant="accordion" multiple>
-          <v-expansion-panel
-            bg-color="primary"
-            prominent
-            class="elevation-0 pa-0 ma-0"
-            v-for="(menu, index) in menus"
-            :key="index"
-            :value="index"
-            :title="menu.title"
-          >
-            <v-expansion-panel-text class="pa-0 ma-0">
-              <v-container class="pa-0 ma-0">
-                <v-row
-                  v-for="(link, index) in menu.links"
-                  :key="index"
-                  :value="index"
-                  class="pa-0 ma-0"
-                >
-                  <v-col class="pa-0 ma-0">
-                    <v-btn
-                      block
-                      color="primary"
-                      prominent
-                      class="elevation-0"
-                      @click="changeComp(link.route)"
-                    >
-                      {{ link.link }}
-                    </v-btn>
-                  </v-col>
-                </v-row>
-              </v-container>
-            </v-expansion-panel-text>
-          </v-expansion-panel>
-        </v-expansion-panels>
-      </v-col>
-    </v-row>
-  </v-container>
-</template>
+  <v-app-bar color="primary" prominent class="elevation-0">
+    <template v-slot:prepend>
+      <!-- OC logo image -->
+      <v-img
+        class="mx-2"
+        :src="logoURL"
+        height="50"
+        width="50"
+        contain
+        transition="scale-transition"
+      ></v-img>
+    </template>
+    <!-- OC Music Dept title in top bar -->
+    <v-toolbar-title class="title">
+      {{ this.title }}
+    </v-toolbar-title>
+    <!-- <v-spacer></v-spacer> -->
+    <div class="align-right justify-right d-flex">
+      <v-toolbar-items
+        v-for="menu in activeMenus"
+        :key="menu.link"
+        class="hidden-md-and-down"
+      >
+        <v-btn
+          class="hidden-md-and-down white--text mx-1"
+          exact
+          text
+          @click="changeComp(menu.link)"
+        >
+          {{ menu.text }}
+        </v-btn>
+      </v-toolbar-items>
+      <v-select
+        :items="userRoles"
+        item-title="role"
+        v-model="currentRole"
+        variant="underlined"
+        class="ma-2"
+        return-object
+        :disabled="userRoles.length < 2"
+      >
+      </v-select>
+    </div>
 
+    <v-menu bottom min-width="250px" rounded offset-y v-if="user != null">
+      <template v-slot:activator="{ props }">
+        <v-btn v-bind="props" icon x-large>
+          <v-avatar v-if="user != null" color="secondary">
+            <span class="accent--text font-weight-bold">{{ initials }}</span>
+          </v-avatar>
+        </v-btn>
+      </template>
+      <v-card>
+        <v-card-text>
+          <div class="mx-auto text-center">
+            <v-avatar color="secondary" class="mt-2 mb-2">
+              <span class="accent--text font-weight-bold">{{ initials }}</span>
+            </v-avatar>
+            <h3>{{ name }}</h3>
+            <p class="text-caption mt-1">
+              {{ user.email }}
+            </p>
+            <v-divider class="my-3"></v-divider>
+            <v-btn variant="text" @click="changeComp('studentSettings')">
+              Student Settings
+            </v-btn>
+            <br />
+            <v-btn variant="text" @click="logout()"> Logout </v-btn>
+          </div>
+        </v-card-text>
+      </v-card>
+    </v-menu>
+  </v-app-bar>
+</template>
 <script>
-import { defineComponent } from "vue";
-export default defineComponent({
+import ocLogo from "../../public/oc_logo_social.png";
+import Utils from "../config/utils.js";
+import UserRoleDataService from "../services/UserRoleDataService";
+import AuthServices from "../services/authServices.js";
+export default {
   name: "MainNav",
-  props: {},
-  components: {},
-  data() {
-    return {
-      drawer: false,
-      selectedItem: "",
-      menus: [
-        {
-          title: "Student",
-          links: [
-            { link: "View Repertoire", route: "studentRepertoire" },
-            { link: "Upcoming Events", route: "studentViewEvents" },
-            { link: "Event Sign-Ups", route: "studentEventSignUps" },
-            { link: "View Your Critiques", route: "studentCritiques" },
-            { link: "Event Recordings", route: "studentRecordings" },
-          ],
-        },
-        {
-          title: "Faculty",
-          links: [
-            { link: "View Student Critiques", route: "facultyViewCritiques" },
-            { link: "Create Event Critique", route: "facultyCreateCritiques" },
-            { link: "Event Availability", route: "createAvailability" },
-          ],
-        },
-        {
-          title: "Accompanist",
-          links: [{ link: "Event Availability", route: "createAvailability" }],
-        },
-        {
-          title: "Admin",
-          links: [
-            { link: "Create Event", route: "adminCreateEvents" },
-            { link: "Events", route: "adminViewEvents" },
-          ],
-        },
-      ],
-    };
+  components: {
+    ocLogo,
   },
-  // emits: ["changeComp"],
-  // setup(props, { emit }) {
-  //   const changeComp = (route) => {
-  //     this.$router.push({ path: route });
-  //   };
-  //   return {
-  //     changeComp,
-  //   };
-  // },
+  data: () => ({
+    user: {},
+    title: "OC Music Department",
+    initials: "",
+    name: "",
+    logoURL: null,
+    activeMenus: [],
+    menus: [
+      {
+        link: "studentRepertoire",
+        text: "Repertoire",
+        roles: "Student",
+      },
+      {
+        link: "studentViewEvents",
+        text: "Upcoming Events",
+        roles: "Student",
+      },
+      {
+        link: "studentEventSignUps",
+        text: "Event Sign-Ups",
+        roles: "Student",
+      },
+      {
+        link: "studentCritiques",
+        text: "Critiques",
+        roles: "Student",
+      },
+      {
+        link: "studentRecordings",
+        text: "Recordings",
+        roles: "Student",
+      },
+      {
+        link: "facultyViewCritiques",
+        text: "View Student Critiques",
+        roles: "Faculty",
+      },
+      {
+        link: "facultyCreateCritiques",
+        text: "Create Event Critique",
+        roles: "Faculty",
+      },
+      {
+        link: "createAvailability",
+        text: "Event Availability",
+        roles: "Faculty, Accompanist",
+      },
+      {
+        link: "adminCreateEvents",
+        text: "Create Event",
+        roles: "Admin",
+      },
+      {
+        link: "adminViewEvents",
+        text: "Events",
+        roles: "Admin",
+      },
+    ],
+    userRoles: [],
+    currentRole: {
+      role: "",
+    },
+  }),
+  async created() {
+    this.logoURL = ocLogo;
+    this.resetMenu();
+  },
+  async mounted() {
+    await this.getUserRoles();
+    this.resetMenu();
+  },
   methods: {
+    async getUserRoles() {
+      this.user = Utils.getStore("user");
+      if (this.user != null) {
+        await UserRoleDataService.getRolesForUser(this.user.userId)
+          .then((response) => {
+            this.userRoles = response.data;
+            if (this.userRoles.length > 0) {
+              this.currentRole = this.userRoles[0];
+            }
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      }
+    },
+    resetMenu() {
+      this.user = null;
+      // ensures that their name gets set properly from store
+      this.user = Utils.getStore("user");
+      if (this.user != null) {
+        this.initials = this.user.fName[0] + this.user.lName[0];
+        this.name = this.user.fName + " " + this.user.lName;
+
+        this.activeMenus = this.menus.filter((menu) =>
+          menu.roles.includes(this.currentRole.role)
+        );
+      }
+    },
+    logout() {
+      AuthServices.logoutUser(this.user)
+        .then((response) => {
+          console.log(response);
+          Utils.removeItem("user");
+          this.$router.push({ name: "loginPage" });
+          location.reload();
+        })
+        .catch((error) => {
+          console.log("error", error);
+        });
+    },
     changeComp(route) {
-      console.log(route);
       this.$router.push({ path: route });
     },
   },
-});
+  watch: {
+    currentRole() {
+      this.resetMenu();
+      this.$router.push({ path: "base" });
+    },
+  },
+};
 </script>
-
-<style scoped>
-.v-expansion-panel-text__wrapper {
-  padding: 0 !important;
-  margin: 0;
+<style>
+.text-center {
+  text-align: center;
 }
 </style>

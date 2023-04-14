@@ -7,7 +7,7 @@ const myCustomTheme = {
   colors: {
     primary: "#80162B",
     cream: "#DADADA",
-    secondary: "262626",
+    secondary: "#262626",
   },
 };
 
