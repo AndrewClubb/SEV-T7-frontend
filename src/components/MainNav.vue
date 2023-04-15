@@ -32,13 +32,13 @@
         </v-btn>
       </v-toolbar-items>
       <v-select
+        v-if="userRoles.length > 1"
         :items="userRoles"
         item-title="role"
         v-model="currentRole"
         variant="underlined"
         class="ma-2"
         return-object
-        :disabled="userRoles.length < 2"
       >
       </v-select>
     </div>
