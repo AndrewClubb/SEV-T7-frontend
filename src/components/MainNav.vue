@@ -31,6 +31,13 @@
           {{ menu.text }}
         </v-btn>
       </v-toolbar-items>
+      <v-btn
+        v-if="this.currentRole.role === ''"
+        variant="text"
+        @click="logout()"
+      >
+        Log back in
+      </v-btn>
       <v-select
         v-if="userRoles.length > 1"
         :items="userRoles"
@@ -179,9 +186,11 @@ export default {
         this.initials = this.user.fName[0] + this.user.lName[0];
         this.name = this.user.fName + " " + this.user.lName;
 
-        this.activeMenus = this.menus.filter((menu) =>
-          menu.roles.includes(this.currentRole.role)
-        );
+        if (this.currentRole.role !== "") {
+          this.activeMenus = this.menus.filter((menu) =>
+            menu.roles.includes(this.currentRole.role)
+          );
+        }
       }
     },
     logout() {
