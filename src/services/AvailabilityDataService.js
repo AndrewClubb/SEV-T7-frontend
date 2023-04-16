@@ -17,5 +17,9 @@ class AvailabilityDataService {
   update(data) {
     return http.put(this.baseUrl + data.id, data);
   }
+
+  getByUserAndEvent(userId, eventId) {
+    return http.get(this.baseUrl + "userId/" + userId + "/eventId/" + eventId);
+  }
 }
 export default new AvailabilityDataService();

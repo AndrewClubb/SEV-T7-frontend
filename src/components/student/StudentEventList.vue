@@ -91,8 +91,8 @@
               class="mb-2"
               label="Instructor"
               readonly
-              @change="showAvailability()"
             >
+              <!-- @change="showAvailability()" -->
             </v-text-field>
           </v-col>
           <v-col cols="3">
@@ -107,10 +107,12 @@
               class="mb-2"
               label="Accompanist"
               readonly
-              @change="showAvailability()"
             >
             </v-text-field>
           </v-col>
+          <v-co>
+            <strong class="text-red-lighten-1">{{ this.errorMessage }}</strong>
+          </v-co>
         </v-row>
         <v-row>
           <v-col>
@@ -125,11 +127,13 @@
                   >
                     <v-btn
                       :style="{ width: '180px' }"
+                      :disabled="this.isDisabled(time)"
                       size="large"
                       elevation="6"
                       class="pa-0 pl-auto ma-1 mt-3"
-                      @click="chooseEvent(index)"
                     >
+                      <!-- @click="chooseEventTime(index)""
+                        :class="if notSelectedTime ? : selectedTime" -->
                       {{
                         this.formatTime(time.startTime) +
                         " - " +
@@ -257,6 +261,7 @@ export default {
       { title: "Actions", sortable: false, allign: "end" },
     ],
     events: [],
+    errorMessage: "",
     songs: [],
     selectedComposer: null,
     selectedSong: null,
@@ -268,15 +273,31 @@ export default {
     transBool: false,
     instAvail: [],
     accAvail: [],
-    selectedEvent: null,
     currentEventTimes: [],
     selectedEventTimes: [],
     isValid: true,
+    selectedTime: [],
+    notSelectedTime: [],
   }),
   methods: {
-    chooseEvent(index) {
-      let time = this.currentEventTimes[index];
+    isDisabled(eventTimeslot) {
+      var result = false;
+
+      if (this.selectedStudentInstrument == null) {
+        result = true;
+      } else if (eventTimeslot.isReserved == "1") {
+        result = true;
+      }
+
+      //within faculty time
+
+      return result;
     },
+    // chooseEventTime(index, selectedStudentInstrument) {
+    //   let time = this.currentEventTimes[index];
+
+    //   console.log(time);
+    // },
     // async signUp() {
     //   if (!this.isValid()) {
     //     return;
@@ -432,6 +453,30 @@ export default {
       } else {
         this.hasSearched = false;
         this.displayComposers = [];
+      }
+    },
+    async selectedStudentInstrument(val) {
+      if (val == null) {
+        return;
+      }
+
+      const facultyId = val.faculty.userId;
+      // const accompId = val.accompanistId;
+
+      console.log("facultyid", facultyId);
+      console.log("eventId", this.selectedEvent.id);
+
+      if (facultyId !== null && facultyId !== undefined) {
+        await AvailabilityDataService.getByUserAndEvent(
+          facultyId,
+          this.selectedEvent.id
+        )
+          .then((response) => {
+            console.log("faculty avail", response.data);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
       }
     },
   },
