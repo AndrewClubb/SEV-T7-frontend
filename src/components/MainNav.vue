@@ -78,7 +78,32 @@
         </v-card-text>
       </v-card>
     </v-menu>
+    <v-app-bar-nav-icon
+      dark
+      class="hidden-lg-and-up"
+      @click="drawer = !drawer"
+    ></v-app-bar-nav-icon>
   </v-app-bar>
+  <v-navigation-drawer
+    v-model="drawer"
+    class="hidden-lg-and-up"
+    app
+    location="right"
+    color="primary"
+  >
+    <v-list>
+      <v-list-item
+        v-for="menu in activeMenus"
+        :key="menu.text"
+        exact
+        @click="changeComp(menu.link)"
+      >
+        <v-list-item-title class="white--text"
+          >{{ menu.text }}
+        </v-list-item-title>
+      </v-list-item>
+    </v-list>
+  </v-navigation-drawer>
 </template>
 <script>
 import ocLogo from "../../public/oc_logo_social.png";
@@ -92,6 +117,7 @@ export default {
   },
   data: () => ({
     user: {},
+    drawer: false,
     title: "OC Music Department",
     initials: "",
     name: "",
