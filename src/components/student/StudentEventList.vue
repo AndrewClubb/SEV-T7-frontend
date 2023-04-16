@@ -83,9 +83,9 @@
             <v-text-field
               :model-value="
                 selectedStudentInstrument != null
-                  ? selectedStudentInstrument.instructor.user.fName +
+                  ? selectedStudentInstrument.faculty.user.fName +
                     ' ' +
-                    selectedStudentInstrument.instructor.user.lName
+                    selectedStudentInstrument.faculty.user.lName
                   : ''
               "
               class="mb-2"
@@ -128,6 +128,7 @@
                       size="large"
                       elevation="6"
                       class="pa-0 pl-auto ma-1 mt-3"
+                      @click="chooseEvent(index)"
                     >
                       {{
                         this.formatTime(time.startTime) +
@@ -273,17 +274,24 @@ export default {
     isValid: true,
   }),
   methods: {
+    chooseEvent(index) {
+      let time = this.currentEventTimes[index];
+    },
     // async signUp() {
     //   if (!this.isValid()) {
     //     return;
     //   }
 
-    //   const data = {
-    //     studentInstrumentId: this.selectedStudentInstrument.id,
-    //     songId: this.selectedSong.id,
-    //     semesterId:
-    //       this.selectedSemester == null ? null : this.selectedSemester.id,
-    //   };
+    // const data = {
+    //   studentInstrumentId: this.selectedStudentInstrument.id,
+    //   eventTimeslotId: this.currentEventTimes.id,
+    //   facultyId: this.selectedStudentInstrument.faculty.id,
+
+    //   timeslotId: this.time
+    //   songId: this.selectedSong.id,
+    //   semesterId:
+    //     this.selectedSemester == null ? null : this.selectedSemester.id,
+    // };
 
     //   await RepertoireDataService.create(data).catch((e) => {
     //     console.log(e);
@@ -294,7 +302,7 @@ export default {
     //   this.closeDialog();
     // },
     async showAvailability() {
-      this.selectedStudentInstrument.instructor.user.availabilities =
+      this.selectedStudentInstrument.faculty.user.availabilities =
         this.instAvail;
       this.selectedStudentInstrument.accompanist.user.availabilities =
         this.accAvail;
