@@ -99,9 +99,11 @@
             <v-text-field
               :model-value="
                 selectedStudentInstrument != null
-                  ? selectedStudentInstrument.accompanist.user.fName +
-                    ' ' +
-                    selectedStudentInstrument.accompanist.user.lName
+                  ? selectedStudentInstrument.accompanistId != null
+                    ? selectedStudentInstrument.accompanist.user.fName +
+                      ' ' +
+                      selectedStudentInstrument.accompanist.user.lName
+                    : 'No Accompanist'
                   : ''
               "
               class="mb-2"
@@ -131,9 +133,9 @@
                       size="large"
                       elevation="6"
                       class="pa-0 pl-auto ma-1 mt-3"
+                      :color="time.color"
+                      @click="timeslotSelected(time)"
                     >
-                      <!-- @click="chooseEventTime(index)""
-                        :class="if notSelectedTime ? : selectedTime" -->
                       {{
                         this.formatTime(time.startTime) +
                         " - " +
@@ -147,8 +149,7 @@
           </v-col>
           <v-col>
             <v-row>
-              <v-col cols="12">
-                <!-- add cols="6" -->
+              <v-col cols="6">
                 <v-autocomplete
                   clearable
                   v-model="selectedComposer"
@@ -171,10 +172,24 @@
                   :style="{ width: '175px' }"
                 ></v-autocomplete>
               </v-col>
+              <!-- If its a jury have the ability to add songs -->
               <v-col v-if="selectedEvent.type === 'Jury'" cols="6">
                 <v-btn class="pa-1 ma-3"> Add Piece </v-btn>
                 <v-sheet class="overflow-y-auto" color="fav">
-                  <v-list lines="two"> </v-list>
+                  <v-list lines="one">
+                    <v-list-item
+                      v-for="piece in repertoire"
+                      :title="piece.title"
+                      :subtitle="
+                        piece.composer.fName + ' ' + piece.composer.lName
+                      "
+                    >
+                    </v-list-item>
+                    <v-list-item
+                      v-if="this.repertoire.length == 0"
+                      title="No current Repertoire"
+                    ></v-list-item>
+                  </v-list>
                 </v-sheet>
               </v-col>
             </v-row>
@@ -216,8 +231,7 @@
                 >Close</v-btn
               >
               <v-spacer></v-spacer>
-              <!-- @click="signUp" below -->
-              <v-btn color="blue-darken-1"> save </v-btn>
+              <v-btn color="blue-darken-1" @click="signUp()"> save </v-btn>
             </v-card-actions>
           </v-col>
         </v-row>
@@ -235,12 +249,9 @@ import EventDataService from "../../services/EventDataService";
 import EventTimeDataService from "../../services/EventTimeDataService";
 import SongDataService from "../../services/SongDataService";
 import StudentInstrumentDataService from "../../services/StudentInstrumentDataService";
-import StudentRepertoire from "./StudentRepertoire.vue";
+import RepertoireDataService from "../../services/RepertoireDataService";
 export default {
   name: "studentEventList",
-  components: {
-    StudentRepertoire,
-  },
   data: () => ({
     headers: [
       { title: "Event Type", key: "type" },
@@ -275,9 +286,9 @@ export default {
     accAvail: [],
     currentEventTimes: [],
     selectedEventTimes: [],
-    isValid: true,
     selectedTime: [],
     notSelectedTime: [],
+    repertoire: [],
   }),
   methods: {
     isDisabled(eventTimeslot) {
@@ -287,41 +298,60 @@ export default {
         result = true;
       } else if (eventTimeslot.isReserved == "1") {
         result = true;
+      } else if (!this.isTimeslotInAvail(eventTimeslot, this.instAvail)) {
+        result = true;
+      } else if (
+        this.selectedStudentInstrument.accompanistId != null &&
+        !this.isTimeslotInAvail(eventTimeslot, this.accAvail)
+      ) {
+        result = true;
       }
-
-      //within faculty time
-
       return result;
     },
-    // chooseEventTime(index, selectedStudentInstrument) {
-    //   let time = this.currentEventTimes[index];
+    isTimeslotInAvail(timeslot, avail) {
+      var isWithin = false;
 
-    //   console.log(time);
-    // },
-    // async signUp() {
-    //   if (!this.isValid()) {
-    //     return;
-    //   }
-
-    // const data = {
-    //   studentInstrumentId: this.selectedStudentInstrument.id,
-    //   eventTimeslotId: this.currentEventTimes.id,
-    //   facultyId: this.selectedStudentInstrument.faculty.id,
-
-    //   timeslotId: this.time
-    //   songId: this.selectedSong.id,
-    //   semesterId:
-    //     this.selectedSemester == null ? null : this.selectedSemester.id,
-    // };
-
-    //   await RepertoireDataService.create(data).catch((e) => {
-    //     console.log(e);
-    //   });
-
-    //   this.fillSemesters();
-    //   this.fillRepertoire();
-    //   this.closeDialog();
-    // },
+      avail.forEach((chunk) => {
+        if (
+          timeslot.startTime >= chunk.startTime &&
+          timeslot.endTime <= chunk.endTime
+        ) {
+          isWithin = true;
+        }
+      });
+      return isWithin;
+    },
+    timeslotSelected(timeslot) {
+      const tsIndex = this.selectedEventTimes.findIndex(
+        (obj) => obj.id == timeslot.id
+      );
+      //checking if de-selecting button
+      if (tsIndex != -1) {
+        timeslot.color = null;
+        this.selectedEventTimes.splice(tsIndex, 1);
+      } else {
+        if (
+          !this.selectedEvent.canMergeSlots &&
+          this.selectedEventTimes.length > 0
+        ) {
+          //if cannot merge slots, this clears out any current selected slots
+          const oldTimeslot = this.selectedEventTimes[0];
+          oldTimeslot.color = null;
+          this.selectedEventTimes = [];
+        }
+        timeslot.color = "#00ACC1";
+        this.selectedEventTimes.push(timeslot);
+      }
+    },
+    async signUp() {
+      if (!this.isValid()) {
+        return;
+      }
+    },
+    isValid() {
+      return true;
+    },
+    //Availabilities
     async showAvailability() {
       this.selectedStudentInstrument.faculty.user.availabilities =
         this.instAvail;
@@ -346,6 +376,8 @@ export default {
         .catch((e) => {
           console.log(e);
         });
+
+      this.selectedStudentInstrument = null;
 
       this.showDialog = true;
     },
@@ -398,13 +430,19 @@ export default {
           console.log(e);
         });
     },
+    fillRepertoire() {
+      RepertoireDataService.getByUser(this.user.userId)
+        .then((response) => {
+          this.repertoire = response.data;
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
     querySelections(value) {
       this.displayComposers = this.composers.filter((composer) => {
         return composer.title.toLowerCase().indexOf(value.toLowerCase()) > -1;
       });
-    },
-    stuRep() {
-      this.$router.push({ path: "studentRepertoire" });
     },
     formatTime(time) {
       return new Date("January 1, 2000 " + time).toLocaleTimeString("us-EN", {
@@ -456,15 +494,22 @@ export default {
       }
     },
     async selectedStudentInstrument(val) {
+      //selected timeslots
+      this.selectedEventTimes.forEach((ts) => {
+        ts.color = null;
+      });
+      this.selectedEventTimes = [];
+
       if (val == null) {
         return;
       }
 
+      //availability
       const facultyId = val.faculty.userId;
-      // const accompId = val.accompanistId;
+      const accompId =
+        val.accompanistId == null ? null : val.accompanist.userId;
 
-      console.log("facultyid", facultyId);
-      console.log("eventId", this.selectedEvent.id);
+      console.log("accomp", accompId);
 
       if (facultyId !== null && facultyId !== undefined) {
         await AvailabilityDataService.getByUserAndEvent(
@@ -472,7 +517,20 @@ export default {
           this.selectedEvent.id
         )
           .then((response) => {
-            console.log("faculty avail", response.data);
+            this.instAvail = response.data;
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      }
+
+      if (accompId !== null && accompId !== undefined) {
+        await AvailabilityDataService.getByUserAndEvent(
+          accompId,
+          this.selectedEvent.id
+        )
+          .then((response) => {
+            this.accAvail = response.data;
           })
           .catch((err) => {
             console.log(err);
@@ -500,10 +558,10 @@ export default {
     this.user = Utils.getStore("user");
     this.retrieveStudentInstruments();
     this.fillComposers();
+    this.fillRepertoire();
     this.currentDate = new Date();
     let dateString = this.currentDate.toISOString().substring(0, 10);
     await this.retrieveEventsDateAndAfter(dateString);
-    // await this.getAvailabilityForUser();
   },
 };
 </script>
