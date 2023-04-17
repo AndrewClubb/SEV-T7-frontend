@@ -18,6 +18,10 @@ class EventTimeDataService {
     return http.get(this.baseUrl + id);
   }
 
+  update(data) {
+    return http.put(this.baseUrl + data.id, data);
+  }
+
   getByEvent(id) {
     return http.get(this.baseUrl + `event/${id}`);
   }

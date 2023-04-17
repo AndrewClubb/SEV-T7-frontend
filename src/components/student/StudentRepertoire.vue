@@ -1,6 +1,6 @@
 <template>
   <v-card>
-    <v-card-title> Repertoire: </v-card-title>
+    <v-card-title> Student Repertoire: </v-card-title>
   </v-card>
   <v-container>
     <v-btn color="primary" @click="displayDialog"> Add Piece </v-btn>
@@ -14,9 +14,9 @@
             v-for="stuInstrument in semester.studentInstruments"
             class="mt-5"
             elevation="2"
-            color="orange-lighten-5"
+            color="fav"
           >
-            <v-card-title>
+            <v-card-title text-color="light">
               {{ stuInstrument.instrument.name }}
             </v-card-title>
             <v-card-text>
