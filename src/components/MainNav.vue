@@ -16,7 +16,7 @@
       {{ this.title }}
     </v-toolbar-title>
     <!-- <v-spacer></v-spacer> -->
-    <div class="align-right justify-right d-flex">
+    <div v-if="userRoles.length > 1" class="align-right justify-right d-flex">
       <v-toolbar-items
         v-for="menu in activeMenus"
         :key="menu.link"
@@ -39,7 +39,6 @@
         Log back in
       </v-btn>
       <v-select
-        v-if="userRoles.length > 1"
         :items="userRoles"
         item-title="role"
         v-model="currentRole"
@@ -48,6 +47,30 @@
         return-object
       >
       </v-select>
+    </div>
+    <div v-else class="align-right justify-right d-flex">
+      <v-toolbar-items
+        v-for="menu in activeMenus"
+        :key="menu.link"
+        class="hidden-md-and-down"
+      >
+        <v-btn
+          class="hidden-md-and-down white--text mx-1"
+          style="height: 45px"
+          exact
+          text
+          @click="changeComp(menu.link)"
+        >
+          {{ menu.text }}
+        </v-btn>
+      </v-toolbar-items>
+      <v-btn
+        v-if="this.currentRole.role === ''"
+        variant="text"
+        @click="logout()"
+      >
+        Log back in
+      </v-btn>
     </div>
 
     <v-menu bottom min-width="250px" rounded offset-y v-if="user != null">
