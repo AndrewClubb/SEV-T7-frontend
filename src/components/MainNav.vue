@@ -202,6 +202,9 @@ export default {
     currentRole: {
       role: "",
     },
+    previousRole: {
+      role: "",
+    },
   }),
   async created() {
     this.logoURL = ocLogo;
@@ -220,6 +223,7 @@ export default {
             this.userRoles = response.data;
             if (this.userRoles.length > 0) {
               this.currentRole = this.userRoles[0];
+              this.previousRole.role = this.currentRole.role;
             }
           })
           .catch((err) => {
@@ -261,7 +265,9 @@ export default {
   watch: {
     currentRole() {
       this.resetMenu();
-      this.$router.push({ path: "base" });
+      if (this.previousRole.role !== this.currentRole.role) {
+        this.$router.push({ path: "base" });
+      }
     },
   },
 };
