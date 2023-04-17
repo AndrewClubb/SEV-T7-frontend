@@ -434,6 +434,11 @@ export default {
       RepertoireDataService.getByUser(this.user.userId)
         .then((response) => {
           this.repertoire = response.data;
+          //New
+          // this.repertoire.forEach((song) => {
+          //   song.title = song.title;
+
+          // })
         })
         .catch((err) => {
           console.log(err);
