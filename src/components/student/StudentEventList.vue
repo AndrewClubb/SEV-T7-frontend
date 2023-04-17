@@ -2,6 +2,13 @@
   <v-card>
     <v-card-title> Sign-Up For Events: </v-card-title>
   </v-card>
+  <v-alert
+    v-model="alert"
+    color="blue-darken-1"
+    text="You are now signed up for the event!"
+    closable
+  >
+  </v-alert>
   <v-container>
     <v-row>
       <v-col>
@@ -65,9 +72,9 @@
       </v-card-title>
       <v-divider></v-divider>
       <v-card-text>
-        <!-- <v-row class="ml-5">
+        <v-row class="ml-1">
           <strong class="text-red-lighten-1">{{ this.errorMessage }}</strong>
-        </v-row> -->
+        </v-row>
         <v-row>
           <v-col cols="3">
             <v-select
@@ -112,9 +119,6 @@
             >
             </v-text-field>
           </v-col>
-          <v-co>
-            <strong class="text-red-lighten-1">{{ this.errorMessage }}</strong>
-          </v-co>
         </v-row>
         <v-row>
           <v-col>
@@ -180,9 +184,6 @@
                     <v-list-item
                       v-for="piece in repertoire"
                       :title="piece.title"
-                      :subtitle="
-                        piece.composer.fName + ' ' + piece.composer.lName
-                      "
                     >
                     </v-list-item>
                     <v-list-item
@@ -200,6 +201,7 @@
             <v-row>
               <v-textarea
                 :disabled="!transBool"
+                v-model="translation"
                 label="Translation here..."
                 variant="outlined"
               >
@@ -207,7 +209,7 @@
             </v-row>
           </v-col>
         </v-row>
-        <v-row class="pa-1 ma-1">
+        <v-row v-if="false" class="pa-1 ma-1">
           <v-col class="pa-1 ma-1">
             <v-card-text class="pa-1 ma-1">
               Nothing available/request swap:
@@ -249,6 +251,9 @@ import EventDataService from "../../services/EventDataService";
 import EventTimeDataService from "../../services/EventTimeDataService";
 import SongDataService from "../../services/SongDataService";
 import StudentInstrumentDataService from "../../services/StudentInstrumentDataService";
+import StudentTimeslotDataService from "../../services/StudentTimeslotDataService";
+import TimeslotSongDataService from "../../services/TimeslotSongDataService";
+import SongTranslationDataService from "../../services/SongTranslationDataService";
 import RepertoireDataService from "../../services/RepertoireDataService";
 export default {
   name: "studentEventList",
@@ -271,6 +276,7 @@ export default {
       { title: "End Time", key: "endTime", sortable: false },
       { title: "Actions", sortable: false, allign: "end" },
     ],
+    alert: false,
     events: [],
     errorMessage: "",
     songs: [],
@@ -289,6 +295,7 @@ export default {
     selectedTime: [],
     notSelectedTime: [],
     repertoire: [],
+    translation: "",
   }),
   methods: {
     isDisabled(eventTimeslot) {
@@ -343,13 +350,78 @@ export default {
         this.selectedEventTimes.push(timeslot);
       }
     },
-    async signUp() {
+    signUp() {
       if (!this.isValid()) {
         return;
       }
+      const studentTimeslotData = {
+        studentInstrumentId: this.selectedStudentInstrument.id,
+        eventTimeslotId: this.selectedEventTimes[0].id,
+        facultyId: this.selectedStudentInstrument.facultyId,
+      };
+
+      StudentTimeslotDataService.create(studentTimeslotData).catch((err) => {
+        console.log(err);
+      });
+
+      const eventTimeslotData = {
+        id: this.selectedEventTimes[0].id,
+        isReserved: true,
+      };
+
+      //UNCOMMENT AFTER CELEBRATION OF EXCELLENCE
+      // EventTimeDataService.update(eventTimeslotData).catch((err) => {
+      //   console.log(err);
+      // });
+
+      const timeslotSongData = {
+        timeslotId: this.selectedEventTimes[0].id,
+        songId: this.selectedSong.id,
+      };
+
+      TimeslotSongDataService.create(timeslotSongData).catch((err) => {
+        console.log(err);
+      });
+
+      if (this.transBool) {
+        const translationData = {
+          type: "User",
+          text: this.translation,
+          language: "English",
+          songId: this.selectedSong.id,
+        };
+
+        SongTranslationDataService.create(translationData).catch((err) => {
+          console.log(err);
+        });
+      }
+
+      this.showDialog = false;
+      this.alert = true;
     },
     isValid() {
-      return true;
+      var result = true;
+
+      if (this.selectedStudentInstrument === null) {
+        this.errorMessage = "Select your instrument.";
+        result = false;
+      } else if (this.selectedEventTimes.length == 0) {
+        this.errorMessage = "Select a timeslot.";
+        result = false;
+      } else if (
+        this.selectedComposer === null ||
+        this.selectedComposer === ""
+      ) {
+        this.errorMessage = "Select your composer.";
+        result = false;
+      } else if (this.selectedSong === null || this.selectedSong === "") {
+        this.errorMessage = "Select your piece.";
+        result = false;
+      } else if (this.transBool && this.translation === "") {
+        this.errorMessage = "Write foreign translation.";
+        result = false;
+      }
+      return result;
     },
     //Availabilities
     async showAvailability() {
@@ -357,12 +429,9 @@ export default {
         this.instAvail;
       this.selectedStudentInstrument.accompanist.user.availabilities =
         this.accAvail;
-
-      console.log(instAvail);
-      console.log(accAvail);
     },
     async makeCurrentEvent(event) {
-      this.errorMessage = "";
+      this.errorMessage = "Select your instrument.";
       this.selectedEvent = event;
       this.currentSlot = this.userChosenSlot.filter(
         (obj) => obj.eventId == event.id
@@ -371,7 +440,6 @@ export default {
       await EventTimeDataService.getByEvent(event.id)
         .then((response) => {
           this.currentEventTimes = response.data;
-          // console.log(this.currentEventTimes);
         })
         .catch((e) => {
           console.log(e);
@@ -385,7 +453,6 @@ export default {
       await EventDataService.getGTEDate(date)
         .then((response) => {
           this.events = response.data;
-          // console.log(this.events);
         })
         .catch((e) => {
           console.log(e);
@@ -399,8 +466,6 @@ export default {
         .catch((e) => {
           console.log(e);
         });
-      console.log(this.studentInstruments);
-      console.log(this.selectedStudentInstrument);
     },
     handleClick() {
       this.active = !this.active;
@@ -509,12 +574,14 @@ export default {
         return;
       }
 
+      if (this.errorMessage === "Select your instrument.") {
+        this.errorMessage = "";
+      }
+
       //availability
       const facultyId = val.faculty.userId;
       const accompId =
         val.accompanistId == null ? null : val.accompanist.userId;
-
-      console.log("accomp", accompId);
 
       if (facultyId !== null && facultyId !== undefined) {
         await AvailabilityDataService.getByUserAndEvent(
