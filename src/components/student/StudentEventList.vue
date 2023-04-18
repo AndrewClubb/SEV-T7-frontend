@@ -369,10 +369,9 @@ export default {
         isReserved: true,
       };
 
-      //UNCOMMENT AFTER CELEBRATION OF EXCELLENCE
-      // EventTimeDataService.update(eventTimeslotData).catch((err) => {
-      //   console.log(err);
-      // });
+      EventTimeDataService.update(eventTimeslotData).catch((err) => {
+        console.log(err);
+      });
 
       const timeslotSongData = {
         timeslotId: this.selectedEventTimes[0].id,
