@@ -132,6 +132,7 @@
 import ocLogo from "../../public/oc_logo_social.png";
 import Utils from "../config/utils.js";
 import UserRoleDataService from "../services/UserRoleDataService";
+import UserDataService from "../services/UserDataService";
 import AuthServices from "../services/authServices.js";
 export default {
   name: "MainNav",
@@ -202,9 +203,6 @@ export default {
     currentRole: {
       role: "",
     },
-    previousRole: {
-      role: "",
-    },
   }),
   async created() {
     this.logoURL = ocLogo;
@@ -221,15 +219,43 @@ export default {
         await UserRoleDataService.getRolesForUser(this.user.userId)
           .then((response) => {
             this.userRoles = response.data;
-            if (this.userRoles.length > 0) {
-              this.currentRole = this.userRoles[0];
-              this.previousRole.role = this.currentRole.role;
+
+            if (
+              this.user.lastRole !== null &&
+              this.user.lastRole !== undefined
+            ) {
+              const roleIndex = this.userRoles.findIndex(
+                (role) => role.role === this.user.lastRole
+              );
+              if (roleIndex === -1) {
+                if (this.userRoles.length > 0) {
+                  this.currentRole = this.userRoles[0];
+                  this.updateLastRole(this.currentRole.role);
+                }
+              } else {
+                this.currentRole = this.userRoles[roleIndex];
+              }
+            } else {
+              if (this.userRoles.length > 0) {
+                this.currentRole = this.userRoles[0];
+                this.updateLastRole(this.currentRole.role);
+              }
             }
           })
           .catch((err) => {
             console.log(err);
           });
       }
+    },
+    updateLastRole(newRole) {
+      this.user.lastRole = newRole;
+      const data = {
+        id: this.user.userId,
+        lastRole: newRole,
+      };
+      UserDataService.update(data).catch((err) => {
+        console.log(err);
+      });
     },
     resetMenu() {
       this.user = null;
@@ -265,7 +291,8 @@ export default {
   watch: {
     currentRole() {
       this.resetMenu();
-      if (this.previousRole.role !== this.currentRole.role) {
+      if (this.user.lastRole !== this.currentRole.role) {
+        this.updateLastRole(this.currentRole.role);
         this.$router.push({ path: "base" });
       }
     },
