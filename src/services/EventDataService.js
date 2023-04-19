@@ -6,6 +6,10 @@ class EventDataService {
     return http.get(this.baseUrl);
   }
 
+  getById(eventId) {
+    return http.get(this.baseUrl + eventId);
+  }
+
   update(data) {
     return http.put(this.baseUrl + `${data.id}`, data);
   }
@@ -26,8 +30,8 @@ class EventDataService {
     return http.post(this.baseUrl, data);
   }
 
-  getStudentTimeslotsForDate(date) {
-    return http.get(this.baseUrl + "critiqueTimeslots/" + date);
+  getStudentTimeslotsForEvent(eventId) {
+    return http.get(this.baseUrl + "critiqueTimeslots/" + eventId);
   }
 
   getSemesterCritiques(semesterId) {

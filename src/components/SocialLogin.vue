@@ -54,6 +54,7 @@ export default {
         .then((response) => {
           this.user = response.data;
           Utils.setStore("user", this.user);
+          Utils.setStore("userRole", { role: this.user.lastRole });
           this.fName = this.user.fName;
           this.lName = this.user.lName;
           this.$router.push({ name: "base" });

@@ -215,17 +215,15 @@ export default {
   methods: {
     async getUserRoles() {
       this.user = Utils.getStore("user");
+      var previousRole = Utils.getStore("userRole").role;
       if (this.user != null) {
         await UserRoleDataService.getRolesForUser(this.user.userId)
           .then((response) => {
             this.userRoles = response.data;
 
-            if (
-              this.user.lastRole !== null &&
-              this.user.lastRole !== undefined
-            ) {
+            if (previousRole !== null && previousRole !== undefined) {
               const roleIndex = this.userRoles.findIndex(
-                (role) => role.role === this.user.lastRole
+                (role) => role.role === previousRole
               );
               if (roleIndex === -1) {
                 if (this.userRoles.length > 0) {
@@ -248,7 +246,7 @@ export default {
       }
     },
     updateLastRole(newRole) {
-      this.user.lastRole = newRole;
+      Utils.setStore("userRole", { role: newRole });
       const data = {
         id: this.user.userId,
         lastRole: newRole,
@@ -291,7 +289,7 @@ export default {
   watch: {
     currentRole() {
       this.resetMenu();
-      if (this.user.lastRole !== this.currentRole.role) {
+      if (Utils.getStore("userRole").role !== this.currentRole.role) {
         this.updateLastRole(this.currentRole.role);
         this.$router.push({ path: "base" });
       }
