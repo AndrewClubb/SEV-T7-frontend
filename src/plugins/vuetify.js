@@ -7,9 +7,9 @@ const myCustomTheme = {
   colors: {
     primary: "#80162B",
     cream: "#DADADA",
-    // light: "FBFBFB",
-    fav: "d2f0ee",
-    secondary: "#262626",
+    darkB: "#00ACC1",
+    fav: "d2f0ee", //light blue
+    secondary: "#262626", //grey
   },
 };
 
