@@ -317,7 +317,6 @@ export default {
     accAvail: [],
     alert: false,
     adminAlert: false,
-    checked: false,
     composers: [],
     composerSearch: null,
     currentEventTimes: [],
@@ -615,7 +614,10 @@ export default {
         });
 
       this.selectedStudentInstrument = null;
-
+      this.currentRepertoire = [];
+      this.selectedPiece = {};
+      this.transBool = false;
+      this.translation = "";
       this.showDialog = true;
     },
     async retrieveEventsDateAndAfter(date) {
