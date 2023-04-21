@@ -12,9 +12,10 @@
           <StudentSettings
             v-if="this.$route.fullPath === '/studentSettings'"
           ></StudentSettings>
-          <CreateCritique
+          <FacultyCreateCritique
             v-if="this.$route.fullPath === '/facultyCreateCritiques'"
-          ></CreateCritique>
+            :event-id="368"
+          ></FacultyCreateCritique>
           <StudentEventList
             v-if="this.$route.fullPath === '/studentEventSignUps'"
           ></StudentEventList>
@@ -52,7 +53,7 @@ import StudentSettings from "../components/student/StudentSettings.vue";
 import MainNav from "../components/MainNav.vue";
 import StudentHome from "../components/student/StudentHome.vue";
 import FacultyHome from "../components/faculty/FacultyHome.vue";
-import CreateCritique from "../components/faculty/CreateCritique.vue";
+import FacultyCreateCritique from "../components/faculty/FacultyCreateCritique.vue";
 import StudentEventList from "../components/student/StudentEventList.vue";
 import StudentViewCritique from "../components/student/StudentViewCritique.vue";
 import FacultyCritiqueView from "../components/faculty/CritiqueView.vue";
@@ -67,12 +68,11 @@ export default {
     StudentSettings,
     StudentHome, //Landing Page for the Students
     StudentEventList,
-    CreateCritique,
+    FacultyCreateCritique,
     StudentViewCritique,
     //Faculty Component
     FacultyHome,
     FacultyCritiqueView,
-    //Accompanist Component
     //Admin Component
     CreateAvailability,
     StudentRepertoire,
