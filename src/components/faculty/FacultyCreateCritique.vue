@@ -175,11 +175,7 @@
       <v-divider></v-divider>
       <v-card-text> </v-card-text>
       <v-card-actions>
-        <v-btn
-          color="blue-darken-1"
-          variant="text"
-          @click="recitalHearingDialog = false"
-        >
+        <v-btn color="blue-darken-1" variant="text" @click="juryDialog = false">
           Cancel
         </v-btn>
         <v-spacer></v-spacer>
@@ -488,7 +484,7 @@ export default {
         for (let i = 0; result && i < this.critiques.length; i++) {
           const critique = this.critiques[i];
           if (critique.grade == null || critique.grade == undefined) {
-            this.errorMessage = "Must select a grade for " + critique.title;
+            this.errorMessage = "Must select a grade for " + critique.type;
             result = false;
           }
         }
