@@ -14,7 +14,6 @@
           ></StudentSettings>
           <FacultyCreateCritique
             v-if="this.$route.fullPath === '/facultyCreateCritiques'"
-            :event-id="368"
           ></FacultyCreateCritique>
           <StudentEventList
             v-if="this.$route.fullPath === '/studentEventSignUps'"

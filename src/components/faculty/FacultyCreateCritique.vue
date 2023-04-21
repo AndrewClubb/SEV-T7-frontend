@@ -272,6 +272,7 @@ export default {
     jurorTimeslotId: null,
     originalCritiques: null,
     filterBool: null,
+    eventId: null,
   }),
   methods: {
     async fillTimeslots() {
@@ -673,13 +674,12 @@ export default {
     },
   },
   async mounted() {
+    this.eventId = Utils.getStore("eventId");
+    console.log(this.eventId);
     this.getFacultyId();
     await this.fillTimeslots();
     await this.fillHasCritiques();
     this.filterBool = true;
-  },
-  props: {
-    eventId: Number,
   },
   watch: {
     filterBool() {
