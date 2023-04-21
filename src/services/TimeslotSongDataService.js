@@ -6,6 +6,10 @@ class TimeslotSongDataService {
     return http.get(this.baseUrl);
   }
 
+  getByTimeslotId(timeslotId) {
+    return http.get(this.baseUrl + "timeslotId/" + timeslotId);
+  }
+
   create(data) {
     return http.post(this.baseUrl, data);
   }

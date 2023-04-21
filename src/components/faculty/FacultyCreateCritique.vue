@@ -38,7 +38,7 @@
               </div>
               <div v-else>
                 <v-btn
-                  v-if="true"
+                  v-if="!item.raw.hasCritiques"
                   small
                   color="primary"
                   @click="createCritiques(item.raw)"
@@ -58,7 +58,7 @@
       </v-data-table>
     </div>
   </v-container>
-  <v-dialog v-model="dialog" max-width="800px">
+  <v-dialog v-model="recitalHearingDialog" max-width="800px">
     <v-card>
       <v-card-title>
         <v-row>
@@ -139,13 +139,57 @@
         </v-row>
       </v-card-text>
       <v-card-actions>
-        <v-btn color="blue-darken-1" variant="text" @click="closeDialog">
+        <v-btn
+          color="blue-darken-1"
+          variant="text"
+          @click="recitalHearingDialog = false"
+        >
           Cancel
         </v-btn>
         <v-spacer></v-spacer>
         <strong class="text-red-lighten-1">{{ this.errorMessage }}</strong>
         <v-spacer></v-spacer>
-        <v-btn color="blue-darken-1" variant="text" @click="ConfirmCritiques">
+        <v-btn
+          color="blue-darken-1"
+          variant="text"
+          @click="ConfirmRecitalCritiques"
+        >
+          SAVE
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+  <v-dialog v-model="juryDialog" max-width="800px">
+    <v-card>
+      <v-card-title>
+        <v-row>
+          <v-col>
+            {{ "Date: " + this.timeslots.date }}
+          </v-col>
+          <v-spacer></v-spacer>
+          <v-col align="end">
+            {{ "Type: " + this.timeslots.type }}
+          </v-col>
+        </v-row>
+      </v-card-title>
+      <v-divider></v-divider>
+      <v-card-text> </v-card-text>
+      <v-card-actions>
+        <v-btn
+          color="blue-darken-1"
+          variant="text"
+          @click="recitalHearingDialog = false"
+        >
+          Cancel
+        </v-btn>
+        <v-spacer></v-spacer>
+        <strong class="text-red-lighten-1">{{ this.errorMessage }}</strong>
+        <v-spacer></v-spacer>
+        <v-btn
+          color="blue-darken-1"
+          variant="text"
+          @click="ConfirmJuryCritiques"
+        >
           SAVE
         </v-btn>
       </v-card-actions>
@@ -158,6 +202,7 @@ import Utils from "../../config/utils";
 import UserRoleDataService from "../../services/UserRoleDataService";
 import JurorTimeslotDataService from "../../services/JurorTimeslotDataService";
 import CritiqueDataService from "../../services/CritiqueDataService";
+import TimeslotSongDataService from "../../services/TimeslotSongDataService";
 export default {
   name: "FacultyCreateCritique",
   data: () => ({
@@ -169,48 +214,16 @@ export default {
       { title: "End Time", key: "endTime" },
       { title: "Actions", sortable: false },
     ],
-    dialog: false,
+    recitalHearingDialog: false,
+    juryDialog: false,
     currentTimeslot: {},
     isExpandedForm: false,
-    critiques: [
-      {
-        title: "Deportment",
-        description: "Poise, entrance and exit bow",
-      },
-      {
-        title: "Interpretation / Musicianship",
-        description: "Phrasing, temp, dynamics communication, rapport",
-      },
-      {
-        title: "Tone",
-        description: "Beauty, control/clarity, vibrato, warmth",
-      },
-      {
-        title: "Balance Blend",
-        description: "With accompanist or within ensemble",
-      },
-      {
-        title: "Accuracy / Intonation",
-        description:
-          "Correct notes with correct rhythm, tuning with keyboard and/or ensemble",
-      },
-      {
-        title: "Diction / Articulation",
-        description: "Vowels; consonants - legato, double/triple tongue",
-      },
-      {
-        title: "Technique",
-        description:
-          "Attacks, releases, flexibility, range, resonance, placement, support, agility",
-      },
-      {
-        title: "Overall",
-        description: "General impression of performance",
-      },
-    ],
-    overallComment: "",
+    critiques: null,
+    overallComment: null,
     grades: ["Poor", "Fair", "Good", "Excellent"],
     errorMessage: null,
+    timeslotSongs: [],
+    filteredTimeslotSongs: [],
   }),
   methods: {
     async fillTimeslots() {
@@ -241,6 +254,14 @@ export default {
           console.log(err);
         });
     },
+    async fillHasCritiques() {
+      for (let i = 0; i < this.timeslots.eventTimeslots.length; i++) {
+        this.timeslots.eventTimeslots[i].hasCritiques = await this.hasCritiques(
+          this.timeslots.eventTimeslots[i]
+        );
+      }
+      console.log(this.timeslots);
+    },
     getFacultyId() {
       const user = Utils.getStore("user");
       UserRoleDataService.getRolesForUser(user.userId)
@@ -253,21 +274,85 @@ export default {
           console.log(err);
         });
     },
+    async getTimeslotSongs() {
+      await TimeslotSongDataService.getByTimeslotId(this.currentTimeslot.id)
+        .then((response) => {
+          this.timeslotSongs = response.data;
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
+    async hasCritiques(timeslot) {
+      var createdCritiques;
+      await CritiqueDataService.getCritiquesByTimeslotAndFaculty(
+        timeslot.id,
+        this.facultyId
+      )
+        .then((response) => {
+          createdCritiques = response.data;
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+
+      return createdCritiques.length > 0;
+    },
     formatTime(time) {
       return new Date("January 1, 2000 " + time).toLocaleTimeString("us-EN", {
         hour: "numeric",
         minute: "numeric",
       });
     },
-    createCritiques(timeslot) {
+    async createCritiques(timeslot) {
       this.errorMessage = "";
       this.currentTimeslot = timeslot;
-      this.dialog = true;
+
+      if (this.timeslots.type === "Recital Hearing") {
+        this.critiques = [
+          {
+            title: "Deportment",
+            description: "Poise, entrance and exit bow",
+          },
+          {
+            title: "Interpretation / Musicianship",
+            description: "Phrasing, temp, dynamics communication, rapport",
+          },
+          {
+            title: "Tone",
+            description: "Beauty, control/clarity, vibrato, warmth",
+          },
+          {
+            title: "Balance Blend",
+            description: "With accompanist or within ensemble",
+          },
+          {
+            title: "Accuracy / Intonation",
+            description:
+              "Correct notes with correct rhythm, tuning with keyboard and/or ensemble",
+          },
+          {
+            title: "Diction / Articulation",
+            description: "Vowels; consonants - legato, double/triple tongue",
+          },
+          {
+            title: "Technique",
+            description:
+              "Attacks, releases, flexibility, range, resonance, placement, support, agility",
+          },
+          {
+            title: "Overall",
+            description: "General impression of performance",
+          },
+        ];
+        this.recitalHearingDialog = true;
+        this.overallComment = null;
+      } else {
+        this.juryDialog = true;
+        this.getTimeslotSongs();
+      }
     },
-    closeDialog() {
-      this.dialog = false;
-    },
-    async ConfirmCritiques() {
+    async ConfirmRecitalCritiques() {
       if (!this.isValid()) {
         return;
       }
@@ -303,26 +388,31 @@ export default {
           });
         });
       });
+      this.currentTimeslot.hasCritiques = true;
 
-      this.closeDialog();
+      this.recitalHearingDialog = false;
     },
     isValid() {
       var result = true;
 
-      for (let i = 0; result && i < this.critiques.length; i++) {
-        const critique = this.critiques[i];
-        if (critique.grade == null || critique.grade == undefined) {
-          this.errorMessage = "Must select a grade for " + critique.title;
-          result = false;
+      if (this.timeslots.type === "Recital Hearing") {
+        for (let i = 0; result && i < this.critiques.length; i++) {
+          const critique = this.critiques[i];
+          if (critique.grade == null || critique.grade == undefined) {
+            this.errorMessage = "Must select a grade for " + critique.title;
+            result = false;
+          }
         }
       }
 
       return result;
     },
+    ConfirmJuryCritiques() {},
   },
   async mounted() {
-    await this.fillTimeslots();
     this.getFacultyId();
+    await this.fillTimeslots();
+    await this.fillHasCritiques();
   },
   props: {
     eventId: Number,

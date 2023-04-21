@@ -6,12 +6,18 @@ class CritiqueDataService {
     return http.get(this.baseUrl);
   }
 
+  getCritiquesByTimeslotAndFaculty(timeslotId, facultyId) {
+    return http.get(
+      this.baseUrl + "timeslotId/" + timeslotId + "/facultyId/" + facultyId
+    );
+  }
+
   create(data) {
     return http.post(this.baseUrl, data);
   }
 
-  update(id, data) {
-    return http.put(this.baseUrl + id, data);
+  update(data) {
+    return http.put(this.baseUrl + data.id, data);
   }
 
   delete(id) {
