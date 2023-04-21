@@ -20,6 +20,12 @@ const router = createRouter({
     {
       path: "/base",
       component: Base,
+      name: "studentHome",
+      alias: "/studentHome",
+    },
+    {
+      path: "/base",
+      component: Base,
       name: "studentSettings",
       alias: "/studentSettings",
     },
@@ -57,6 +63,12 @@ const router = createRouter({
     {
       path: "/base",
       component: Base,
+      name: "facultyHome",
+      alias: "/facultyHome",
+    },
+    {
+      path: "/base",
+      component: Base,
       name: "facultyViewCritiques",
       alias: "/facultyViewCritiques",
     },
@@ -74,6 +86,12 @@ const router = createRouter({
       alias: "/createAvailability",
     },
     // Admin Routes
+    {
+      path: "/base",
+      component: Base,
+      name: "adminHome",
+      alias: "/adminHome",
+    },
     {
       path: "/base",
       component: Base,

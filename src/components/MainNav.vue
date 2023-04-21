@@ -2,14 +2,16 @@
   <v-app-bar color="primary" prominent class="elevation-0">
     <template v-slot:prepend>
       <!-- OC logo image -->
-      <v-img
-        class="mx-2"
-        :src="logoURL"
-        height="50"
-        width="50"
-        contain
-        transition="scale-transition"
-      ></v-img>
+      <v-btn icon plain @click="goToHome">
+        <v-img
+          class="mx-2"
+          :src="logoURL"
+          height="50"
+          width="50"
+          contain
+          transition="scale-transition"
+        ></v-img>
+      </v-btn>
     </template>
     <!-- OC Music Dept title in top bar -->
     <v-toolbar-title class="title">
@@ -154,7 +156,7 @@ export default {
         roles: "Student",
       },
       {
-        link: "studentViewEvents",
+        link: "studentUpcomingEvents",
         text: "Upcoming Events",
         roles: "Student",
       },
@@ -166,11 +168,6 @@ export default {
       {
         link: "studentCritiques",
         text: "Critiques",
-        roles: "Student",
-      },
-      {
-        link: "studentRecordings",
-        text: "Recordings",
         roles: "Student",
       },
       {
@@ -187,11 +184,6 @@ export default {
         link: "createAvailability",
         text: "Event Availability",
         roles: "Faculty, Accompanist",
-      },
-      {
-        link: "adminCreateEvents",
-        text: "Create Event",
-        roles: "Admin",
       },
       {
         link: "adminViewEvents",
@@ -255,6 +247,19 @@ export default {
         console.log(err);
       });
     },
+    goToHome() {
+      if (Utils.getStore("userRole").role == "Faculty") {
+        this.$router.push({ path: "facultyHome" });
+      } else if (Utils.getStore("userRole").role == "Student") {
+        this.$router.push({ path: "studentHome" });
+      } else if (Utils.getStore("userRole").role == "Admin") {
+        this.$router.push({ path: "adminHome" });
+      } else if (Utils.getStore("userRole").role == "Accompanist") {
+        this.$router.push({ path: "createAvailability" });
+      } else {
+        this.$router.push({ path: "base" });
+      }
+    },
     resetMenu() {
       this.user = null;
       // ensures that their name gets set properly from store
@@ -291,7 +296,7 @@ export default {
       this.resetMenu();
       if (Utils.getStore("userRole").role !== this.currentRole.role) {
         this.updateLastRole(this.currentRole.role);
-        this.$router.push({ path: "base" });
+        this.goToHome();
       }
     },
   },
