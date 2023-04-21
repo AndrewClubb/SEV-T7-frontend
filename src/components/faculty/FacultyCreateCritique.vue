@@ -173,7 +173,20 @@
         </v-row>
       </v-card-title>
       <v-divider></v-divider>
-      <v-card-text> </v-card-text>
+      <v-card-text>
+        <v-row>
+          <v-select
+            v-model="selectedSong"
+            title="Grade"
+            :items="timeslotSongs"
+            return-object
+            :style="{ width: '50px' }"
+          ></v-select>
+        </v-row>
+        <v-row>
+          <v-textarea></v-textarea>
+        </v-row>
+      </v-card-text>
       <v-card-actions>
         <v-btn color="blue-darken-1" variant="text" @click="juryDialog = false">
           Cancel
@@ -219,6 +232,7 @@ export default {
     grades: ["Poor", "Fair", "Good", "Excellent"],
     errorMessage: null,
     timeslotSongs: [],
+    selectedSong: {},
     filteredTimeslotSongs: [],
     isEdit: null,
     jurorTimeslotId: null,
