@@ -42,7 +42,7 @@
               <div class="d-flex justify-space-between">
                 {{ this.formatDate(event.date) }} | {{ event.type }}
                 <v-banner-text color="darkB"> TODAY! </v-banner-text>
-                <v-btn color="primary" @click="createCrit()">
+                <v-btn color="primary" @click="createCrit(event.id)">
                   Create Critiques
                 </v-btn>
               </div></v-card-title
@@ -67,6 +67,7 @@
 <script>
 import EventDataService from "../../services/EventDataService";
 import SemesterDataService from "../../services/SemesterDataService";
+import Utils from "../../config/utils";
 export default {
   name: "facultyHome",
   data: () => ({
@@ -79,7 +80,8 @@ export default {
     viewCrit() {
       this.$router.push({ path: "facultyViewCritiques" });
     },
-    createCrit() {
+    createCrit(id) {
+      Utils.setStore("eventId", id);
       this.$router.push({ path: "facultyCreateCritiques" });
     },
     createAvail() {
