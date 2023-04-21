@@ -22,6 +22,8 @@
             v-if="this.$route.fullPath === '/studentCritiques'"
           ></StudentViewCritique>
           <!-- Faculty Section -->
+          <FacultyHome v-if="this.$route.fullPath === '/facultyViewCritiques'">
+          </FacultyHome>
           <FacultyCritiqueView
             v-if="this.$route.fullPath === '/facultyViewCritiques'"
           ></FacultyCritiqueView>
