@@ -89,7 +89,7 @@
         <v-row no-gutters>
           <v-col cols="6" v-for="critique in critiques">
             <v-row no-gutters>
-              <strong>{{ critique.title }}</strong>
+              <strong>{{ critique.type }}</strong>
             </v-row>
             <v-row no-gutters>
               <v-col justify="end" align-self="start">
@@ -108,7 +108,7 @@
               </v-col>
             </v-row>
             <v-row
-              v-if="isExpandedForm && critique.title !== 'Overall'"
+              v-if="isExpandedForm && critique.type !== 'Overall'"
               no-gutters
             >
               <v-col cols="10">
@@ -224,6 +224,9 @@ export default {
     errorMessage: null,
     timeslotSongs: [],
     filteredTimeslotSongs: [],
+    isEdit: null,
+    jurorTimeslotId: null,
+    originalCritiques: null,
   }),
   methods: {
     async fillTimeslots() {
@@ -256,11 +259,11 @@ export default {
     },
     async fillHasCritiques() {
       for (let i = 0; i < this.timeslots.eventTimeslots.length; i++) {
-        this.timeslots.eventTimeslots[i].hasCritiques = await this.hasCritiques(
+        var critiques = await this.getTimeslotCritiques(
           this.timeslots.eventTimeslots[i]
         );
+        this.timeslots.eventTimeslots[i].hasCritiques = critiques.length > 0;
       }
-      console.log(this.timeslots);
     },
     getFacultyId() {
       const user = Utils.getStore("user");
@@ -283,7 +286,7 @@ export default {
           console.log(err);
         });
     },
-    async hasCritiques(timeslot) {
+    async getTimeslotCritiques(timeslot) {
       var createdCritiques;
       await CritiqueDataService.getCritiquesByTimeslotAndFaculty(
         timeslot.id,
@@ -296,7 +299,7 @@ export default {
           console.log(err);
         });
 
-      return createdCritiques.length > 0;
+      return createdCritiques;
     },
     formatTime(time) {
       return new Date("January 1, 2000 " + time).toLocaleTimeString("us-EN", {
@@ -307,88 +310,174 @@ export default {
     async createCritiques(timeslot) {
       this.errorMessage = "";
       this.currentTimeslot = timeslot;
+      this.isEdit = false;
 
       if (this.timeslots.type === "Recital Hearing") {
         this.critiques = [
           {
-            title: "Deportment",
+            type: "Deportment",
             description: "Poise, entrance and exit bow",
           },
           {
-            title: "Interpretation / Musicianship",
+            type: "Interpretation / Musicianship",
             description: "Phrasing, temp, dynamics communication, rapport",
           },
           {
-            title: "Tone",
+            type: "Tone",
             description: "Beauty, control/clarity, vibrato, warmth",
           },
           {
-            title: "Balance Blend",
+            type: "Balance Blend",
             description: "With accompanist or within ensemble",
           },
           {
-            title: "Accuracy / Intonation",
+            type: "Accuracy / Intonation",
             description:
               "Correct notes with correct rhythm, tuning with keyboard and/or ensemble",
           },
           {
-            title: "Diction / Articulation",
+            type: "Diction / Articulation",
             description: "Vowels; consonants - legato, double/triple tongue",
           },
           {
-            title: "Technique",
+            type: "Technique",
             description:
               "Attacks, releases, flexibility, range, resonance, placement, support, agility",
           },
           {
-            title: "Overall",
+            type: "Overall",
             description: "General impression of performance",
           },
         ];
         this.recitalHearingDialog = true;
         this.overallComment = null;
+        this.isExpandedForm = false;
+      } else {
+        this.juryDialog = true;
+        this.getTimeslotSongs();
+      }
+    },
+    async editCritiques(timeslot) {
+      this.errorMessage = "";
+      this.currentTimeslot = timeslot;
+      this.isEdit = true;
+
+      if (this.timeslots.type === "Recital Hearing") {
+        this.originalCritiques = await this.getTimeslotCritiques(timeslot);
+        this.critiques =
+          this.originalCritiques[0].studentTimeslots[0].critiques;
+        this.critiques.find((obj) => {
+          return obj.type === "Deportment";
+        }).description = "Poise, entrance and exit bow";
+        this.critiques.find((obj) => {
+          return obj.type === "Interpretation / Musicianship";
+        }).description = "Phrasing, temp, dynamics communication, rapport";
+        this.critiques.find((obj) => {
+          return obj.type === "Tone";
+        }).description = "Beauty, control/clarity, vibrato, warmth";
+        this.critiques.find((obj) => {
+          return obj.type === "Balance Blend";
+        }).description = "With accompanist or within ensemble";
+        this.critiques.find((obj) => {
+          return obj.type === "Accuracy / Intonation";
+        }).description =
+          "Correct notes with correct rhythm, tuning with keyboard and/or ensemble";
+        this.critiques.find((obj) => {
+          return obj.type === "Diction / Articulation";
+        }).description = "Vowels; consonants - legato, double/triple tongue";
+        this.critiques.find((obj) => {
+          return obj.type === "Technique";
+        }).description =
+          "Attacks, releases, flexibility, range, resonance, placement, support, agility";
+        this.critiques.find((obj) => {
+          return obj.type === "Overall";
+        }).description = "General impression of performance";
+        this.overallComment = this.critiques.find((obj) => {
+          return obj.type === "Overall";
+        }).comment;
+        this.recitalHearingDialog = true;
+
+        this.isExpandedForm =
+          this.critiques.findIndex((obj) => {
+            return obj.comment != null;
+          }) != -1;
       } else {
         this.juryDialog = true;
         this.getTimeslotSongs();
       }
     },
     async ConfirmRecitalCritiques() {
-      if (!this.isValid()) {
-        return;
-      }
+      if (!this.isEdit) {
+        if (!this.isValid()) {
+          return;
+        }
 
-      var jurorTimeslotData = {
-        eventTimeslotId: this.currentTimeslot.id,
-        jurorId: this.facultyId,
-      };
+        var jurorTimeslotData = {
+          eventTimeslotId: this.currentTimeslot.id,
+          jurorId: this.facultyId,
+        };
 
-      await JurorTimeslotDataService.create(jurorTimeslotData)
-        .then((response) => {
-          jurorTimeslotData = response.data;
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-
-      this.currentTimeslot.studentTimeslots.forEach((studentTimeslot) => {
-        this.critiques.forEach((critique) => {
-          const critiqueData = {
-            type: critique.title,
-            grade: critique.grade,
-            comment:
-              critique.title === "Overall"
-                ? this.overallComment
-                : critique.comment,
-            studentTimeslotId: studentTimeslot.id,
-            jurorTimeslotId: jurorTimeslotData.id,
-          };
-
-          CritiqueDataService.create(critiqueData).catch((err) => {
+        await JurorTimeslotDataService.create(jurorTimeslotData)
+          .then((response) => {
+            jurorTimeslotData = response.data;
+          })
+          .catch((err) => {
             console.log(err);
           });
+
+        this.currentTimeslot.studentTimeslots.forEach((studentTimeslot) => {
+          this.critiques.forEach((critique) => {
+            const critiqueData = {
+              type: critique.title,
+              grade: critique.grade,
+              comment:
+                critique.title === "Overall"
+                  ? this.overallComment == null || this.overallComment == ""
+                    ? null
+                    : this.overallComment
+                  : critique.comment == null ||
+                    critique.comment == undefined ||
+                    critique.comment == ""
+                  ? null
+                  : critique.comment,
+              studentTimeslotId: studentTimeslot.id,
+              jurorTimeslotId: jurorTimeslotData.id,
+            };
+
+            CritiqueDataService.create(critiqueData).catch((err) => {
+              console.log(err);
+            });
+          });
         });
-      });
-      this.currentTimeslot.hasCritiques = true;
+        this.currentTimeslot.hasCritiques = true;
+      } else {
+        this.originalCritiques[0].studentTimeslots.forEach(
+          (studentTimeslot) => {
+            this.critiques.forEach((critique) => {
+              const critiqueData = {
+                id: studentTimeslot.critiques.find((obj) => {
+                  return obj.type === critique.type;
+                }).id,
+                grade: critique.grade,
+                comment:
+                  critique.type === "Overall"
+                    ? this.overallComment == null || this.overallComment == ""
+                      ? null
+                      : this.overallComment
+                    : critique.comment == null ||
+                      critique.comment == undefined ||
+                      critique.comment == ""
+                    ? null
+                    : critique.comment,
+              };
+
+              CritiqueDataService.update(critiqueData).catch((err) => {
+                console.log(err);
+              });
+            });
+          }
+        );
+      }
 
       this.recitalHearingDialog = false;
     },
