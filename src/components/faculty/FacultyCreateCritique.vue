@@ -275,6 +275,7 @@ export default {
   }),
   methods: {
     async fillTimeslots() {
+      this.timeslots = [];
       await EventDataService.getStudentTimeslotsForEvent(this.eventId)
         .then((response) => {
           this.timeslots = response.data[0];
@@ -451,7 +452,7 @@ export default {
 
         this.isExpandedForm =
           this.critiques.findIndex((obj) => {
-            return obj.comment != null;
+            return obj.type != "Overall" && obj.comment != null;
           }) != -1;
       } else {
         await this.getTimeslotSongs();
@@ -544,6 +545,7 @@ export default {
         );
       }
 
+      await this.reloadTable();
       this.recitalHearingDialog = false;
     },
     isValid() {
@@ -649,7 +651,25 @@ export default {
           }
         );
       }
+
+      await this.reloadTable();
       this.juryDialog = false;
+    },
+    async reloadTable() {
+      await this.fillTimeslots();
+      await this.fillHasCritiques();
+      this.hideCritiques();
+    },
+    hideCritiques() {
+      this.filteredTimeslots = [];
+      if (this.filterBool) {
+        this.filteredTimeslots.eventTimeslots =
+          this.timeslots.eventTimeslots.filter((obj) => {
+            return !obj.hasCritiques;
+          });
+      } else {
+        this.filteredTimeslots = this.timeslots;
+      }
     },
   },
   async mounted() {
@@ -663,15 +683,7 @@ export default {
   },
   watch: {
     filterBool() {
-      this.filteredTimeslots = [];
-      if (this.filterBool) {
-        this.filteredTimeslots.eventTimeslots =
-          this.timeslots.eventTimeslots.filter((obj) => {
-            return !obj.hasCritiques;
-          });
-      } else {
-        this.filteredTimeslots = this.timeslots;
-      }
+      this.hideCritiques();
     },
   },
 };
