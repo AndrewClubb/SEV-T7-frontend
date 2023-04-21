@@ -493,10 +493,10 @@ export default {
         this.currentTimeslot.studentTimeslots.forEach((studentTimeslot) => {
           this.critiques.forEach((critique) => {
             const critiqueData = {
-              type: critique.title,
+              type: critique.type,
               grade: critique.grade,
               comment:
-                critique.title === "Overall"
+                critique.type === "Overall"
                   ? this.overallComment == null || this.overallComment == ""
                     ? null
                     : this.overallComment
