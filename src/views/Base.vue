@@ -22,7 +22,7 @@
             v-if="this.$route.fullPath === '/studentCritiques'"
           ></StudentViewCritique>
           <!-- Faculty Section -->
-          <FacultyHome v-if="this.$route.fullPath === '/facultyViewCritiques'">
+          <FacultyHome v-if="this.$route.fullPath === '/facultyHome'">
           </FacultyHome>
           <FacultyCritiqueView
             v-if="this.$route.fullPath === '/facultyViewCritiques'"
@@ -51,6 +51,7 @@
 import StudentSettings from "../components/student/StudentSettings.vue";
 import MainNav from "../components/MainNav.vue";
 import StudentHome from "../components/student/StudentHome.vue";
+import FacultyHome from "../components/faculty/FacultyHome.vue";
 import CreateCritique from "../components/faculty/CreateCritique.vue";
 import StudentEventList from "../components/student/StudentEventList.vue";
 import StudentViewCritique from "../components/student/StudentViewCritique.vue";
@@ -69,6 +70,7 @@ export default {
     CreateCritique,
     StudentViewCritique,
     //Faculty Component
+    FacultyHome,
     FacultyCritiqueView,
     //Accompanist Component
     //Admin Component
