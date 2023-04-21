@@ -5,7 +5,9 @@ class SongTranslationDataService {
   getAll() {
     return http.get(this.baseUrl);
   }
-
+  getByPieceId(id) {
+    return http.get(this.baseUrl + "pieceId/" + id);
+  }
   create(data) {
     return http.post(this.baseUrl, data);
   }
