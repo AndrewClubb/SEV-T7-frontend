@@ -24,62 +24,41 @@
         </v-card>
       </v-col>
       <v-col cols="9">
-        <!-- v-for="events in facEvents" -->
         <v-card>
           <v-card-title> Event Tasks: </v-card-title>
           <v-divider></v-divider>
-          <v-card-title>
-            <div class="d-flex justify-space-between" v-for="event in events">
-              {{ event.date }} April 18 | Recital Hearing
-              <!-- v-if(dateCompareResult) -->
-              <v-btn color="primary" @click="viewCrit()">
-                View Critiques
-              </v-btn>
-            </div></v-card-title
-          >
-          <!-- <v-card-title>
-            <div class="d-flex justify-space-between">
-              April 18 | Recital Hearing
-              <v-btn color="primary" @click="viewCrit()">
-                View Critiques
-              </v-btn>
-            </div></v-card-title
-          > -->
-          <v-divider inset></v-divider>
-          <v-card-title>
-            <!-- {{ events.date }} -->
-            <div class="d-flex justify-space-between">
-              April 21 | Jury
-              <v-banner-text color="darkB"> TODAY! </v-banner-text>
-              <v-btn color="primary" @click="createCrit()">
-                Create Critiques
-              </v-btn>
-            </div></v-card-title
-          >
-          <v-divider inset></v-divider>
-          <v-card-title>
-            <!-- {{ events.date }} -->
-            <div class="d-flex justify-space-between">
-              April 25 | Event Hearing
-              <v-btn color="primary" @click="createAvail()">
-                Create Availability
-              </v-btn>
-            </div></v-card-title
-          >
-
-          <!-- <v-card-text class="text-h6 py-2">
-            <v-row>
-              <v-col cols="9"></v-col>
-              <v-col cols="3">
-                <v-btn align="end"> View Critiques </v-btn></v-col
-              >
-            </v-row>
-
+          <div v-for="event in events">
+            <v-card-title v-if="this.compareDates(event.date) < 0">
+              <div class="d-flex justify-space-between">
+                {{ this.formatDate(event.date) }} | {{ event.type }}
+                <!-- v-if(dateCompareResult) -->
+                <v-btn color="primary" @click="viewCrit()">
+                  View Critiques
+                </v-btn>
+              </div></v-card-title
+            >
             <v-divider inset></v-divider>
-
-            April 24 | Another Event - Jury
-            <v-btn> Make Critiques </v-btn>
-          </v-card-text> -->
+            <v-card-title v-if="this.compareDates(event.date) == 0">
+              <div class="d-flex justify-space-between">
+                {{ this.formatDate(event.date) }} | {{ event.type }}
+                <v-banner-text color="darkB"> TODAY! </v-banner-text>
+                <v-btn color="primary" @click="createCrit()">
+                  Create Critiques
+                </v-btn>
+              </div></v-card-title
+            >
+            <v-divider inset></v-divider>
+            <v-card-title v-if="this.compareDates(event.date) > 0">
+              <!-- {{ events.date }} -->
+              <div class="d-flex justify-space-between">
+                {{ this.formatDate(event.date) }} | {{ event.type }}
+                <v-btn color="primary" @click="createAvail()">
+                  Create Availability
+                </v-btn>
+              </div></v-card-title
+            >
+            <v-divider inset></v-divider>
+          </div>
         </v-card>
       </v-col>
     </v-row>
@@ -91,7 +70,7 @@ import SemesterDataService from "../../services/SemesterDataService";
 export default {
   name: "facultyHome",
   data: () => ({
-    facEvents: [],
+    events: [],
     semester: {},
     id: {},
   }),
@@ -122,7 +101,7 @@ export default {
       await SemesterDataService.getCurrent(dateString)
         .then((response) => {
           this.semester = response.data[0];
-          console.log(this.semester[0].id);
+          console.log(this.semester.id);
         })
         .catch((e) => {
           console.log(e);
@@ -166,7 +145,6 @@ export default {
   async mounted() {
     await this.getCurrentSemester();
     await this.semesterUpdated();
-    this.getAllEventTypes();
   },
 };
 </script>
