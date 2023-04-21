@@ -4,8 +4,15 @@
   </v-card>
   <v-alert
     v-model="alert"
-    color="blue-darken-1"
+    color="darkB"
     text="You are now signed up for the event!"
+    closable
+  >
+  </v-alert>
+  <v-alert
+    v-model="adminAlert"
+    color="darkB"
+    text="You have successfully requested for a timeslot swap - you will be notified when this gets approved!"
     closable
   >
   </v-alert>
@@ -99,7 +106,6 @@
               label="Instructor"
               readonly
             >
-              <!-- @change="showAvailability()" -->
             </v-text-field>
           </v-col>
           <v-col cols="3">
@@ -153,7 +159,7 @@
           </v-col>
           <v-col>
             <v-row>
-              <v-col cols="6">
+              <v-col cols="5">
                 <v-autocomplete
                   clearable
                   v-model="selectedComposer"
@@ -175,19 +181,41 @@
                   :no-data-text="noPieceDataText"
                   :style="{ width: '175px' }"
                 ></v-autocomplete>
+                <v-btn
+                  v-if="selectedEvent.type === 'Jury'"
+                  class="pa-1 ma-3"
+                  @click="addPiece()"
+                >
+                  Add To Repertoire
+                </v-btn>
               </v-col>
               <!-- If its a jury have the ability to add songs -->
-              <v-col v-if="selectedEvent.type === 'Jury'" cols="6">
-                <v-btn class="pa-1 ma-3"> Add Piece </v-btn>
-                <v-sheet class="overflow-y-auto" color="fav">
+              <v-col v-if="selectedEvent.type === 'Jury'" cols="7">
+                <!-- semester, stuInstrument, song -->
+                <v-btn class="pa-1 ma-3" @click="removePiece()">
+                  Delete From Repertoire
+                </v-btn>
+                <v-sheet
+                  max-height="200"
+                  class="overflow-y-auto"
+                  activeColor="piece.color"
+                >
                   <v-list lines="one">
                     <v-list-item
-                      v-for="piece in repertoire"
+                      v-for="(piece, index) in currentRepertoire"
+                      :key="index"
                       :title="piece.title"
+                      :subtitle="
+                        piece.composer.fName + ' ' + piece.composer.lName
+                      "
+                      @click="changePieceOptions(piece)"
+                      :class="
+                        selectedPiece.id === piece.id ? 'bg-darkB' : 'bg-white'
+                      "
                     >
                     </v-list-item>
                     <v-list-item
-                      v-if="this.repertoire.length == 0"
+                      v-if="this.currentRepertoire.length == 0"
                       title="No current Repertoire"
                     ></v-list-item>
                   </v-list>
@@ -196,10 +224,19 @@
             </v-row>
             <v-row>
               <input class="pa-1 ma-1" type="checkbox" v-model="transBool" />
-              <label for="checkbox"> Foreign Translation</label>
+              <label for="checkbox"> Foreign Translation </label>
             </v-row>
             <v-row>
               <v-textarea
+                v-if="selectedEvent.type === 'Jury'"
+                :disabled="!transBool || selectedPiece.id == undefined"
+                v-model="selectedPiece.translation"
+                label="Translation for selected piece here..."
+                variant="outlined"
+              >
+              </v-textarea>
+              <v-textarea
+                v-else
                 :disabled="!transBool"
                 v-model="translation"
                 label="Translation here..."
@@ -209,35 +246,53 @@
             </v-row>
           </v-col>
         </v-row>
-        <v-row v-if="false" class="pa-1 ma-1">
+        <v-row class="pa-1 ma-1">
           <v-col class="pa-1 ma-1">
             <v-card-text class="pa-1 ma-1">
               Nothing available/request swap:
-              <v-btn> Request </v-btn>
+              <v-btn @click="requestDialog = true"> Request </v-btn>
             </v-card-text>
           </v-col>
-          <v-col>
+          <!-- <v-col>
             <v-card-text class="pa-1 ma-1">
               Group performance/same timeslot:
               <v-btn> Request </v-btn>
             </v-card-text>
-          </v-col>
+          </v-col> -->
         </v-row>
         <v-row class="pt-1 mt-1">
           <v-col class="pa-0 ma-1">
             <v-card-actions class="pa-1 ma-1">
-              <v-btn
-                color="blue-darken-1"
-                variant="text"
-                @click="showDialog = false"
+              <v-btn color="darkB" variant="text" @click="showDialog = false"
                 >Close</v-btn
               >
               <v-spacer></v-spacer>
-              <v-btn color="blue-darken-1" @click="signUp()"> save </v-btn>
+              <v-btn color="darkB" @click="signUp()"> save </v-btn>
             </v-card-actions>
           </v-col>
         </v-row>
       </v-card-text>
+    </v-card>
+  </v-dialog>
+  <v-dialog v-model="requestDialog" max-width="500px">
+    <v-card>
+      <v-card-text class="text-h5" align="center"
+        >You are requesting for a new timeslot or to swap, would you like to
+        proceed?</v-card-text
+      >
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn
+          color="blue-darken-1"
+          variant="text"
+          @click="requestDialog = false"
+          >Cancel</v-btn
+        >
+        <v-btn color="blue-darken-1" variant="text" @click="approvedDialog()"
+          >OK</v-btn
+        >
+        <v-spacer></v-spacer>
+      </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
@@ -255,9 +310,27 @@ import StudentTimeslotDataService from "../../services/StudentTimeslotDataServic
 import TimeslotSongDataService from "../../services/TimeslotSongDataService";
 import SongTranslationDataService from "../../services/SongTranslationDataService";
 import RepertoireDataService from "../../services/RepertoireDataService";
+import SemesterDataService from "../../services/SemesterDataService";
 export default {
   name: "studentEventList",
   data: () => ({
+    accAvail: [],
+    alert: false,
+    adminAlert: false,
+    composers: [],
+    composerSearch: null,
+    currentEventTimes: [],
+    currentRepertoire: [],
+    currentSemester: {},
+    displayComposers: [],
+    eventHeader: [
+      { title: "Start Time", key: "startTime", sortable: false },
+      { title: "End Time", key: "endTime", sortable: false },
+      { title: "Actions", sortable: false, allign: "end" },
+    ],
+    errorMessage: "",
+    events: [],
+    hasSearched: false,
     headers: [
       { title: "Event Type", key: "type" },
       { title: "Event Date", key: "date" },
@@ -265,37 +338,24 @@ export default {
       { title: "End Time", key: "endTime" },
       { title: "Actions", key: "actions", sortable: false },
     ],
-    showDialog: false,
-    user: {},
-    search: "",
-    userChosenSlot: [],
-    selectedEvent: null,
-    checked: false,
-    eventHeader: [
-      { title: "Start Time", key: "startTime", sortable: false },
-      { title: "End Time", key: "endTime", sortable: false },
-      { title: "Actions", sortable: false, allign: "end" },
-    ],
-    alert: false,
-    events: [],
-    errorMessage: "",
-    songs: [],
-    selectedComposer: null,
-    selectedSong: null,
-    composers: [],
-    displayComposers: [],
-    hasSearched: false,
-    selectedStudentInstrument: null,
-    composerSearch: null,
-    transBool: false,
     instAvail: [],
-    accAvail: [],
-    currentEventTimes: [],
-    selectedEventTimes: [],
-    selectedTime: [],
     notSelectedTime: [],
     repertoire: [],
+    requestDialog: false,
+    search: "",
+    selectedComposer: null,
+    selectedEvent: null,
+    selectedEventTimes: [],
+    selectedPiece: {},
+    selectedSong: null,
+    selectedStudentInstrument: null,
+    selectedTime: [],
+    showDialog: false,
+    songs: [],
+    transBool: false,
     translation: "",
+    user: {},
+    userChosenSlot: [],
   }),
   methods: {
     isDisabled(eventTimeslot) {
@@ -373,33 +433,135 @@ export default {
         console.log(err);
       });
 
-      const timeslotSongData = {
-        timeslotId: this.selectedEventTimes[0].id,
-        songId: this.selectedSong.id,
-      };
-
-      TimeslotSongDataService.create(timeslotSongData).catch((err) => {
-        console.log(err);
-      });
-
-      if (this.transBool) {
-        const translationData = {
-          type: "User",
-          text: this.translation,
-          language: "English",
+      if (this.selectedEvent.type !== "Jury") {
+        const timeslotSongData = {
+          timeslotId: this.selectedEventTimes[0].id,
           songId: this.selectedSong.id,
         };
 
-        SongTranslationDataService.create(translationData).catch((err) => {
+        TimeslotSongDataService.create(timeslotSongData).catch((err) => {
           console.log(err);
+        });
+
+        if (this.transBool) {
+          const translationData = {
+            type: "User",
+            text: this.translation,
+            language: "English",
+            songId: this.selectedSong.id,
+          };
+
+          SongTranslationDataService.create(translationData).catch((err) => {
+            console.log(err);
+          });
+        }
+      } else {
+        this.currentRepertoire.forEach((song) => {
+          const timeslotSongData = {
+            timeslotId: this.selectedEventTimes[0].id,
+            songId: song.id,
+          };
+
+          TimeslotSongDataService.create(timeslotSongData).catch((err) => {
+            console.log(err);
+          });
+        });
+
+        this.currentRepertoire.forEach((piece) => {
+          if (piece.translation !== null && piece.translation !== undefined) {
+            if (piece.originalId == null) {
+              //creating
+              const translationData = {
+                type: "User",
+                text: piece.translation,
+                language: "English",
+                songId: piece.id,
+              };
+
+              SongTranslationDataService.create(translationData).catch(
+                (err) => {
+                  console.log(err);
+                }
+              );
+            } else {
+              //updating
+              const translationData = {
+                id: piece.originalId,
+                type: "User",
+                text: piece.translation,
+                language: "English",
+                songId: piece.id,
+              };
+
+              SongTranslationDataService.update(translationData).catch(
+                (err) => {
+                  console.log(err);
+                }
+              );
+            }
+          }
         });
       }
 
       this.showDialog = false;
       this.alert = true;
     },
+    closeDialog() {
+      this.dialog = false;
+    },
+    approvedDialog() {
+      this.requestDialog = false;
+      this.showDialog = false;
+      this.adminAlert = true;
+    },
+    changePieceOptions(piece) {
+      this.selectedPiece = piece;
+
+      if (this.selectedPiece.translation == undefined) {
+        SongTranslationDataService.getByPieceId(this.selectedPiece.id)
+          .then((response) => {
+            var translation = null;
+            var originalId = null;
+            var curPiece = this.currentRepertoire.find((obj) => {
+              return obj.id === this.selectedPiece.id;
+            });
+
+            if (response.data.length > 0) {
+              translation = response.data[0].text;
+              originalId = response.data[0].id;
+            }
+
+            curPiece.translation = translation;
+            curPiece.originalId = originalId;
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      }
+    },
+    removePiece() {
+      RepertoireDataService.remove(this.selectedPiece.repertoireId).catch(
+        (err) => {
+          console.log(err);
+        }
+      );
+
+      var index = this.repertoire.findIndex((obj) => {
+        return obj.id === this.selectedStudentInstrument.id;
+      });
+
+      var pieceIndex = this.repertoire[index].repertoire.findIndex(
+        (obj) => obj.id === this.selectedPiece.id
+      );
+
+      this.repertoire[index].repertoire.splice(pieceIndex, 1);
+    },
     isValid() {
       var result = true;
+      //Check if jury and repertoire has pieces in it no need for the rest of this
+      var index = this.repertoire.findIndex((obj) => {
+        return obj.id === this.selectedStudentInstrument.id;
+      });
 
       if (this.selectedStudentInstrument === null) {
         this.errorMessage = "Select your instrument.";
@@ -407,6 +569,17 @@ export default {
       } else if (this.selectedEventTimes.length == 0) {
         this.errorMessage = "Select a timeslot.";
         result = false;
+      } else if (
+        this.transBool &&
+        this.translation === "" &&
+        this.selectedEvent.type !== "Jury"
+      ) {
+        this.errorMessage = "Write foreign translation.";
+        result = false;
+      } else if (this.selectedEvent.type === "Jury") {
+        if (this.repertoire[index].repertoire.length > -1) {
+          return result;
+        }
       } else if (
         this.selectedComposer === null ||
         this.selectedComposer === ""
@@ -416,13 +589,9 @@ export default {
       } else if (this.selectedSong === null || this.selectedSong === "") {
         this.errorMessage = "Select your piece.";
         result = false;
-      } else if (this.transBool && this.translation === "") {
-        this.errorMessage = "Write foreign translation.";
-        result = false;
       }
       return result;
     },
-    //Availabilities
     async showAvailability() {
       this.selectedStudentInstrument.faculty.user.availabilities =
         this.instAvail;
@@ -440,12 +609,15 @@ export default {
         .then((response) => {
           this.currentEventTimes = response.data;
         })
-        .catch((e) => {
-          console.log(e);
+        .catch((err) => {
+          console.log(err);
         });
 
       this.selectedStudentInstrument = null;
-
+      this.currentRepertoire = [];
+      this.selectedPiece = {};
+      this.transBool = false;
+      this.translation = "";
       this.showDialog = true;
     },
     async retrieveEventsDateAndAfter(date) {
@@ -453,8 +625,8 @@ export default {
         .then((response) => {
           this.events = response.data;
         })
-        .catch((e) => {
-          console.log(e);
+        .catch((err) => {
+          console.log(err);
         });
     },
     async retrieveStudentInstruments() {
@@ -462,8 +634,8 @@ export default {
         .then((response) => {
           this.studentInstruments = response.data;
         })
-        .catch((e) => {
-          console.log(e);
+        .catch((err) => {
+          console.log(err);
         });
     },
     handleClick() {
@@ -477,8 +649,8 @@ export default {
           .then((response) => {
             this.songs = response.data;
           })
-          .catch((e) => {
-            console.log(e);
+          .catch((err) => {
+            console.log(err);
           });
       }
     },
@@ -490,19 +662,88 @@ export default {
             composer.title = composer.fName + " " + composer.lName;
           });
         })
-        .catch((e) => {
-          console.log(e);
+        .catch((err) => {
+          console.log(err);
         });
     },
     fillRepertoire() {
-      RepertoireDataService.getByUser(this.user.userId)
+      RepertoireDataService.getSemesterByUser(this.user.userId)
         .then((response) => {
-          this.repertoire = response.data;
-          //New
-          // this.repertoire.forEach((song) => {
-          //   song.title = song.title;
+          var userSemester = response.data.find((semester) => {
+            return semester.id === this.currentSemester.id;
+          });
 
-          // })
+          userSemester.studentInstruments = [];
+          userSemester.repertoires.forEach((rep) => {
+            var index = userSemester.studentInstruments.findIndex(
+              (obj2) => obj2.id === rep.studentInstrument.id
+            );
+
+            if (index == -1) {
+              userSemester.studentInstruments.push(rep.studentInstrument);
+              index = userSemester.studentInstruments.length - 1;
+              userSemester.studentInstruments[index].repertoire = [];
+            }
+
+            rep.song.repertoireId = rep.id;
+
+            userSemester.studentInstruments[index].repertoire.push(rep.song);
+          });
+
+          this.repertoire = userSemester.studentInstruments;
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
+    async addPiece() {
+      var index = this.repertoire.findIndex((obj) => {
+        return obj.id === this.selectedStudentInstrument.id;
+      });
+
+      if (
+        this.repertoire[index] != undefined &&
+        this.repertoire[index].repertoire != undefined &&
+        this.repertoire[index].repertoire.findIndex((obj) => {
+          return obj.id === this.selectedSong.id;
+        }) != -1
+      ) {
+        this.errorMessage = "That piece already exists";
+        return;
+      }
+      this.errorMessage = "";
+      // send to database async
+      const data = {
+        studentInstrumentId: this.selectedStudentInstrument.id,
+        songId: this.selectedSong.id,
+        semesterId: this.currentSemester.id,
+      };
+      RepertoireDataService.create(data).catch((err) => {
+        console.log(err);
+      });
+      //add to rep array repertoire
+      if (index == -1) {
+        this.repertoire.push(this.selectedStudentInstrument);
+        index = this.repertoire.length - 1;
+        this.repertoire[index].repertoire = [];
+      }
+
+      this.selectedSong.composer = this.selectedComposer;
+
+      this.repertoire[index].repertoire.push(this.selectedSong);
+      this.currentRepertoire = this.repertoire[index].repertoire;
+
+      //clear composer
+      this.selectedComposer = null;
+      this.selectedSong = null;
+      this.songs = [];
+    },
+    async getCurrentSemester() {
+      this.currentDate = new Date();
+      let dateString = this.currentDate.toISOString().substring(0, 10);
+      await SemesterDataService.getCurrent(dateString)
+        .then((response) => {
+          this.currentSemester = response.data[0];
         })
         .catch((err) => {
           console.log(err);
@@ -607,6 +848,16 @@ export default {
             console.log(err);
           });
       }
+
+      this.currentRepertoire = this.repertoire.find((rep) => {
+        return rep.id === this.selectedStudentInstrument.id;
+      });
+
+      if (this.currentRepertoire == undefined) {
+        this.currentRepertoire = [];
+      } else {
+        this.currentRepertoire = this.currentRepertoire.repertoire;
+      }
     },
   },
   computed: {
@@ -629,6 +880,7 @@ export default {
     this.user = Utils.getStore("user");
     this.retrieveStudentInstruments();
     this.fillComposers();
+    await this.getCurrentSemester();
     this.fillRepertoire();
     this.currentDate = new Date();
     let dateString = this.currentDate.toISOString().substring(0, 10);
@@ -644,5 +896,8 @@ export default {
 }
 .scrollable {
   overflow-y: scroll;
+}
+.selected {
+  background-color: darkB;
 }
 </style>
