@@ -222,7 +222,7 @@ export default {
     this.semesters.forEach((obj) => (obj.title = obj.year + " - " + obj.code));
     this.user = Utils.getStore("user");
     await this.getCurrentSemester();
-    console.log(this.selectedSemester);
+    // console.log(this.selectedSemester);
     await this.semesterSearchUpdate(this.selectedSemester);
   },
 };

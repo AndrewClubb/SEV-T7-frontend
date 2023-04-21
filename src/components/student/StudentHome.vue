@@ -1,25 +1,87 @@
 <template>
-  <v-container fluid class="bg-white">
-    <v-row align="start">
+  <v-card>
+    <v-card-title> Welcome Alexandria Adams! </v-card-title>
+  </v-card>
+  <v-container>
+    <v-row>
       <v-col>
+        <!-- v-for="events in facEvents" -->
         <v-card>
-          <v-card-title> Upcoming Events: </v-card-title>
+          <v-card-title> Event Tasks: </v-card-title>
+          <v-divider></v-divider>
+          <v-card-title>
+            <!-- {{ events.date }} -->
+            <div class="d-flex justify-space-between">
+              April 18 | Recital Hearing
+              <v-btn color="primary" @click="viewCrit()">
+                View Critiques
+              </v-btn>
+            </div></v-card-title
+          >
+          <v-divider inset></v-divider>
+          <v-card-title>
+            <!-- {{ events.date }} -->
+            <div class="d-flex justify-space-between">
+              April 21 | Jury
+              <v-banner-text color="darkB"> TODAY! </v-banner-text>
+              <v-btn color="primary" @click="goSignUp()"> Sign Up </v-btn>
+            </div></v-card-title
+          >
+          <!-- <v-divider inset></v-divider>
+        <v-card-title>
+          <div class="d-flex justify-space-between">
+            April 25 | Event Hearing
+            <v-btn color="primary" @click="createAvail()">
+              Create Availability
+            </v-btn>
+          </div></v-card-title
+        > -->
         </v-card>
-        <v-container TextAlign:centered>
-          You have no current upcoming events, check back later!
-        </v-container>
       </v-col>
     </v-row>
-    <br />
-    <br />
   </v-container>
 </template>
 
 <script>
+import EventDataService from "../../services/EventDataService";
+import SemesterDataService from "../../services/SemesterDataService";
 export default {
   name: "StudentHome",
   components: {},
-  data: () => ({}),
+  data: () => ({
+    stuEvents: [],
+    semester: {},
+  }),
+  async created() {},
+  methods: {
+    viewCrit() {
+      this.$router.push({ path: "studentCritiques" });
+    },
+    goSignUp() {
+      this.$router.push({ path: "studentEventSignUps" });
+    },
+    async retrieveAllEvents() {
+      await EventDataService.getAll()
+        .then((response) => {
+          this.events = response.data;
+          this.events.forEach((obj) => (obj.title = obj.date));
+        })
+        .catch((e) => {
+          console.log(e);
+        });
+    },
+    async getCurrentSemester() {
+      this.currentDate = new Date();
+      let dateString = this.currentDate.toISOString().substring(0, 10);
+      await SemesterDataService.getCurrent(dateString)
+        .then((response) => {
+          this.semester = response.data;
+        })
+        .catch((e) => {
+          console.log(e);
+        });
+    },
+  },
 };
 </script>
 
