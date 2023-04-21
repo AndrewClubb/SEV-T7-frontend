@@ -253,12 +253,12 @@
               <v-btn @click="requestDialog = true"> Request </v-btn>
             </v-card-text>
           </v-col>
-          <v-col>
+          <!-- <v-col>
             <v-card-text class="pa-1 ma-1">
               Group performance/same timeslot:
               <v-btn> Request </v-btn>
             </v-card-text>
-          </v-col>
+          </v-col> -->
         </v-row>
         <v-row class="pt-1 mt-1">
           <v-col class="pa-0 ma-1">
