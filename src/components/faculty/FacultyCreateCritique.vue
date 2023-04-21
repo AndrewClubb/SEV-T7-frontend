@@ -13,7 +13,7 @@
     <div v-else>
       <v-data-table
         :headers="headers"
-        :items="timeslots.eventTimeslots"
+        :items="filteredTimeslots.eventTimeslots"
         class="elevation-1"
       >
         <template v-slot:top>
@@ -21,6 +21,12 @@
             <v-toolbar-title>{{
               "Today's " + this.timeslots.type + ": " + this.timeslots.name
             }}</v-toolbar-title>
+            <v-spacer></v-spacer>
+            <v-checkbox-btn
+              class="mr-3"
+              label="Filter completed critiques"
+              v-model="filterBool"
+            ></v-checkbox-btn>
           </v-toolbar>
         </template>
         <template #item="{ item }">
@@ -174,17 +180,43 @@
       </v-card-title>
       <v-divider></v-divider>
       <v-card-text>
-        <v-row>
-          <v-select
-            v-model="selectedSong"
-            title="Grade"
-            :items="timeslotSongs"
-            return-object
-            :style="{ width: '50px' }"
-          ></v-select>
+        <v-row v-for="critique in juryCritiques">
+          <v-spacer></v-spacer>
+          <v-col cols="11">
+            <div v-if="critique.counter == 1">First piece:</div>
+            <div v-else>Additional piece:</div>
+            <v-select
+              v-model="critique.piece"
+              item-title="song.title"
+              label="Select the piece"
+              :items="timeslotSongs"
+              return-object
+              :style="{ width: '400px' }"
+              clearable
+            ></v-select>
+            <v-textarea
+              variant="outlined"
+              label="Critique"
+              v-model="critique.comment"
+              rows="3"
+            ></v-textarea>
+          </v-col>
+          <v-spacer></v-spacer>
         </v-row>
         <v-row>
-          <v-textarea></v-textarea>
+          <v-btn
+            class="ml-5"
+            v-if="juryCritiques.length < timeslotSongs.length"
+            @click="addPiece()"
+            >Add a piece</v-btn
+          >
+          <v-spacer></v-spacer>
+          <v-btn
+            class="mr-5"
+            v-if="juryCritiques.length > 1"
+            @click="removePiece()"
+            >Remove a piece</v-btn
+          >
         </v-row>
       </v-card-text>
       <v-card-actions>
@@ -197,7 +229,7 @@
         <v-btn
           color="blue-darken-1"
           variant="text"
-          @click="ConfirmJuryCritiques"
+          @click="confirmJuryCritiques"
         >
           SAVE
         </v-btn>
@@ -217,6 +249,7 @@ export default {
   data: () => ({
     facultyId: null,
     timeslots: [],
+    filteredTimeslots: [],
     headers: [
       { title: "Student(s)", key: "studentNames" },
       { title: "Start Time", key: "startTime" },
@@ -228,18 +261,21 @@ export default {
     currentTimeslot: {},
     isExpandedForm: false,
     critiques: null,
+    juryCritiques: null,
     overallComment: null,
     grades: ["Poor", "Fair", "Good", "Excellent"],
     errorMessage: null,
     timeslotSongs: [],
-    selectedSong: {},
+    selectedSong: null,
     filteredTimeslotSongs: [],
     isEdit: null,
     jurorTimeslotId: null,
     originalCritiques: null,
+    filterBool: null,
   }),
   methods: {
     async fillTimeslots() {
+      this.timeslots = [];
       await EventDataService.getStudentTimeslotsForEvent(this.eventId)
         .then((response) => {
           this.timeslots = response.data[0];
@@ -363,17 +399,24 @@ export default {
         this.overallComment = null;
         this.isExpandedForm = false;
       } else {
-        this.juryDialog = true;
         this.getTimeslotSongs();
+        this.juryCritiques = [
+          {
+            piece: null,
+            comment: null,
+            counter: 1,
+          },
+        ];
+        this.juryDialog = true;
       }
     },
     async editCritiques(timeslot) {
       this.errorMessage = "";
       this.currentTimeslot = timeslot;
       this.isEdit = true;
+      this.originalCritiques = await this.getTimeslotCritiques(timeslot);
 
       if (this.timeslots.type === "Recital Hearing") {
-        this.originalCritiques = await this.getTimeslotCritiques(timeslot);
         this.critiques =
           this.originalCritiques[0].studentTimeslots[0].critiques;
         this.critiques.find((obj) => {
@@ -409,11 +452,24 @@ export default {
 
         this.isExpandedForm =
           this.critiques.findIndex((obj) => {
-            return obj.comment != null;
+            return obj.type != "Overall" && obj.comment != null;
           }) != -1;
       } else {
+        await this.getTimeslotSongs();
+        this.juryCritiques = [];
+        this.originalCritiques[0].studentTimeslots[0].critiques.forEach(
+          (critique) => {
+            this.juryCritiques.push({
+              piece: this.timeslotSongs.find((song) => {
+                return song.song.title === critique.type;
+              }),
+              comment: critique.comment,
+              counter: this.juryCritiques.length + 1,
+            });
+          }
+        );
+
         this.juryDialog = true;
-        this.getTimeslotSongs();
       }
     },
     async ConfirmRecitalCritiques() {
@@ -438,10 +494,10 @@ export default {
         this.currentTimeslot.studentTimeslots.forEach((studentTimeslot) => {
           this.critiques.forEach((critique) => {
             const critiqueData = {
-              type: critique.title,
+              type: critique.type,
               grade: critique.grade,
               comment:
-                critique.title === "Overall"
+                critique.type === "Overall"
                   ? this.overallComment == null || this.overallComment == ""
                     ? null
                     : this.overallComment
@@ -489,6 +545,7 @@ export default {
         );
       }
 
+      await this.reloadTable();
       this.recitalHearingDialog = false;
     },
     isValid() {
@@ -502,19 +559,132 @@ export default {
             result = false;
           }
         }
+      } else if (this.timeslots.type === "Jury") {
+        for (let i = 0; result && i < this.juryCritiques.length; i++) {
+          const critique = this.juryCritiques[i];
+          if (critique.piece == null) {
+            this.errorMessage = "A piece cannot be left empty";
+            result = false;
+          } else if (critique.comment == null) {
+            this.errorMessage = "A critique cannot be left empty";
+            result = false;
+          }
+        }
       }
 
       return result;
     },
-    ConfirmJuryCritiques() {},
+    addPiece() {
+      this.juryCritiques.push({
+        piece: null,
+        comment: null,
+        counter: this.juryCritiques.length + 1,
+      });
+    },
+    removePiece() {
+      this.juryCritiques.pop();
+    },
+    async confirmJuryCritiques() {
+      if (!this.isEdit) {
+        if (!this.isValid()) {
+          return;
+        }
+
+        var jurorTimeslotData = {
+          eventTimeslotId: this.currentTimeslot.id,
+          jurorId: this.facultyId,
+        };
+
+        await JurorTimeslotDataService.create(jurorTimeslotData)
+          .then((response) => {
+            jurorTimeslotData = response.data;
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+
+        this.currentTimeslot.studentTimeslots.forEach((studentTimeslot) => {
+          this.juryCritiques.forEach((critique) => {
+            const critiqueData = {
+              type: critique.piece.song.title,
+              comment: critique.comment,
+              studentTimeslotId: studentTimeslot.id,
+              jurorTimeslotId: jurorTimeslotData.id,
+            };
+
+            CritiqueDataService.create(critiqueData).catch((err) => {
+              console.log(err);
+            });
+          });
+        });
+      } else {
+        if (!this.isValid()) {
+          return;
+        }
+
+        this.originalCritiques[0].studentTimeslots.forEach((stu) => {
+          stu.critiques.forEach((cri) => {
+            CritiqueDataService.delete(cri.id).catch((err) => {
+              console.log(err);
+            });
+          });
+        });
+
+        var jurorTimeslotData =
+          this.originalCritiques[0].studentTimeslots[0].critiques[0]
+            .jurorTimeslot;
+
+        this.originalCritiques[0].studentTimeslots.forEach(
+          (studentTimeslot) => {
+            this.juryCritiques.forEach((critique) => {
+              const critiqueData = {
+                type: critique.piece.song.title,
+                comment: critique.comment,
+                studentTimeslotId: studentTimeslot.id,
+                jurorTimeslotId: jurorTimeslotData.id,
+              };
+
+              CritiqueDataService.create(critiqueData).catch((err) => {
+                console.log(err);
+              });
+            });
+          }
+        );
+      }
+
+      await this.reloadTable();
+      this.juryDialog = false;
+    },
+    async reloadTable() {
+      await this.fillTimeslots();
+      await this.fillHasCritiques();
+      this.hideCritiques();
+    },
+    hideCritiques() {
+      this.filteredTimeslots = [];
+      if (this.filterBool) {
+        this.filteredTimeslots.eventTimeslots =
+          this.timeslots.eventTimeslots.filter((obj) => {
+            return !obj.hasCritiques;
+          });
+      } else {
+        this.filteredTimeslots = this.timeslots;
+      }
+    },
   },
   async mounted() {
     this.getFacultyId();
     await this.fillTimeslots();
     await this.fillHasCritiques();
+    this.filterBool = true;
   },
   props: {
     eventId: Number,
+  },
+  watch: {
+    filterBool() {
+      this.hideCritiques();
+    },
   },
 };
 </script>
