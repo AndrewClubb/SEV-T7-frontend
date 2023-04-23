@@ -207,7 +207,7 @@
       <v-row class="pt-1 mt-1">
         <v-col class="pa-0 ma-1">
           <v-card-actions class="pa-1 ma-1">
-            <v-btn color="darkB" variant="text" @click="showDialog = false"
+            <v-btn color="darkB" variant="text" @click="$emit('closeDialog')"
               >Close</v-btn
             >
             <v-spacer></v-spacer>
@@ -247,6 +247,7 @@ import ComposerDataService from "../../services/ComposerDataService";
 import EventDataService from "../../services/EventDataService";
 import EventTimeDataService from "../../services/EventTimeDataService";
 import SongDataService from "../../services/SongDataService";
+import SemesterDataService from "../../services/SemesterDataService";
 import StudentInstrumentDataService from "../../services/StudentInstrumentDataService";
 import StudentTimeslotDataService from "../../services/StudentTimeslotDataService";
 import TimeslotSongDataService from "../../services/TimeslotSongDataService";
@@ -256,8 +257,6 @@ export default {
   name: "studentSignUpPopUp",
   data: () => ({
     accAvail: [],
-    alert: false,
-    adminAlert: false,
     composers: [],
     composerSearch: null,
     currentEventTimes: [],
@@ -285,20 +284,29 @@ export default {
     requestDialog: false,
     search: "",
     selectedComposer: null,
-    selectedEvent: null,
+    selectedEvent: {},
     selectedEventTimes: [],
     selectedPiece: {},
     selectedSong: null,
     selectedStudentInstrument: null,
     selectedTime: [],
-    showDialog: false,
     songs: [],
+    studentInstruments: [],
     transBool: false,
     translation: "",
     user: {},
     userChosenSlot: [],
   }),
   methods: {
+    async getEvent() {
+      await EventDataService.getById(this.eventId)
+        .then((response) => {
+          this.selectedEvent = response.data;
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
     isDisabled(eventTimeslot) {
       var result = false;
 
@@ -444,16 +452,15 @@ export default {
         });
       }
 
-      this.showDialog = false;
-      this.alert = true;
+      this.$emit("closeDialog");
+      this.$emit("successAlert");
     },
     closeDialog() {
       this.dialog = false;
     },
     approvedDialog() {
-      this.requestDialog = false;
-      this.showDialog = false;
-      this.adminAlert = true;
+      this.$emit("closeDialog");
+      this.$emit("requestAlert");
     },
     changePieceOptions(piece) {
       this.selectedPiece = piece;
@@ -538,28 +545,6 @@ export default {
         this.instAvail;
       this.selectedStudentInstrument.accompanist.user.availabilities =
         this.accAvail;
-    },
-    async makeCurrentEvent(event) {
-      this.errorMessage = "Select your instrument.";
-      this.selectedEvent = event;
-      this.currentSlot = this.userChosenSlot.filter(
-        (obj) => obj.eventId == event.id
-      );
-
-      await EventTimeDataService.getByEvent(event.id)
-        .then((response) => {
-          this.currentEventTimes = response.data;
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-
-      this.selectedStudentInstrument = null;
-      this.currentRepertoire = [];
-      this.selectedPiece = {};
-      this.transBool = false;
-      this.translation = "";
-      this.showDialog = true;
     },
     async retrieveStudentInstruments() {
       await StudentInstrumentDataService.getByUser(this.user.userId)
@@ -681,6 +666,15 @@ export default {
         minute: "numeric",
       });
     },
+    async getCurrentSemester(dateString) {
+      await SemesterDataService.getCurrent(dateString)
+        .then((response) => {
+          this.currentSemester = response.data[0];
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
     addDurationMinutes(time) {
       let timeSplit = time.split(":");
       let hour = Number(timeSplit[0]);
@@ -698,6 +692,33 @@ export default {
         minute.toString().padStart(2, "0") +
         ":00"
       );
+    },
+    async reset() {
+      await this.getEvent();
+      this.user = Utils.getStore("user");
+      await this.retrieveStudentInstruments();
+      this.fillComposers();
+      let currentDate = new Date();
+      let dateString = currentDate.toISOString().substring(0, 10);
+      await this.getCurrentSemester(dateString);
+      this.fillRepertoire();
+
+      this.errorMessage = "Select your instrument.";
+      this.currentSlot = this.userChosenSlot.filter(
+        (obj) => obj.eventId == this.eventId
+      );
+      await EventTimeDataService.getByEvent(this.eventId)
+        .then((response) => {
+          this.currentEventTimes = response.data;
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+      this.selectedStudentInstrument = null;
+      this.currentRepertoire = [];
+      this.selectedPiece = {};
+      this.transBool = false;
+      this.translation = "";
     },
   },
   setup() {
@@ -795,21 +816,13 @@ export default {
       }
     },
   },
-  async mounted() {
-    this.user = Utils.getStore("user");
-    this.retrieveStudentInstruments();
-    this.fillComposers();
-    await this.getCurrentSemester();
-    this.fillRepertoire();
-    this.currentDate = new Date();
-    let dateString = this.currentDate.toISOString().substring(0, 10);
-    await this.retrieveEventsDateAndAfter(dateString);
+  async created() {
+    await this.reset();
   },
-  async created() {},
   props: {
     eventId: Number,
   },
-  emits: ["closeDialog"],
+  emits: ["closeDialog", "successAlert", "requestAlert"],
 };
 </script>
 <style>

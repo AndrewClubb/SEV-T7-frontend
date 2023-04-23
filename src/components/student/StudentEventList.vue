@@ -61,6 +61,8 @@
     <StudentSignUpPopUp
       :event-id="selectedEvent.id"
       @close-dialog="showDialog = false"
+      @success-alert="alert = true"
+      @request-alert="adminAlert = true"
     ></StudentSignUpPopUp>
   </v-dialog>
 </template>
@@ -85,9 +87,7 @@ export default {
     showDialog: false,
   }),
   methods: {
-    async getCurrentSemester() {
-      this.currentDate = new Date();
-      let dateString = this.currentDate.toISOString().substring(0, 10);
+    async getCurrentSemester(dateString) {
       await SemesterDataService.getCurrent(dateString)
         .then((response) => {
           this.currentSemester = response.data[0];
@@ -113,9 +113,9 @@ export default {
     },
   },
   async mounted() {
-    await this.getCurrentSemester();
-    this.currentDate = new Date();
-    let dateString = this.currentDate.toISOString().substring(0, 10);
+    let currentDate = new Date();
+    let dateString = currentDate.toISOString().substring(0, 10);
+    await this.getCurrentSemester(dateString);
     await this.retrieveEventsDateAndAfter(dateString);
   },
   components: {
