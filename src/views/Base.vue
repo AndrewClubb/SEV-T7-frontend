@@ -33,6 +33,9 @@
             v-if="this.$route.fullPath === '/adminViewEvents'"
           >
           </AdminMaintainEvent>
+          <AdminMaintainUserVue
+            v-if="this.$route.fullPath === '/adminViewUsers'"
+          ></AdminMaintainUserVue>
           <!-- Availability -->
           <CreateAvailability
             v-if="this.$route.fullPath === '/createAvailability'"
@@ -61,6 +64,7 @@ import FacultyCritiqueView from "../components/faculty/CritiqueView.vue";
 import CreateAvailability from "../components/faculty/CreateAvailability.vue";
 import StudentRepertoire from "../components/student/StudentRepertoire.vue";
 import AdminMaintainEvent from "../components/admin/AdminMaintainEvent.vue";
+import AdminMaintainUserVue from "../components/admin/AdminMaintainUser.vue";
 export default {
   name: "Base",
   components: {
@@ -79,6 +83,7 @@ export default {
     //Admin Component
     AdminHome,
     AdminMaintainEvent,
+    AdminMaintainUserVue,
   },
 };
 </script>
