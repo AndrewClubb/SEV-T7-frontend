@@ -17,7 +17,6 @@
             <v-text-field
               v-model="selectedUser.fName"
               density="compact"
-              :style="{ width: '175px' }"
             ></v-text-field>
           </v-row>
           <v-row> Last Name: </v-row>
@@ -25,7 +24,6 @@
             <v-text-field
               v-model="selectedUser.lName"
               density="compact"
-              :style="{ width: '175px' }"
             ></v-text-field>
           </v-row>
           <v-row> Roles: </v-row>
@@ -36,7 +34,6 @@
               v-model="roleArray"
               :items="systemRoles"
               density="compact"
-              :style="{ width: '175px' }"
             ></v-select>
           </v-row>
         </v-col>
@@ -44,7 +41,7 @@
     </v-card-text>
     <v-card-actions class="mt-5">
       <v-spacer></v-spacer>
-      <v-btn color="blue-darken-1" variant="text" @click="closeDialog"
+      <v-btn color="blue-darken-1" variant="text" @click="$emit('closeDialog')"
         >Cancel</v-btn
       >
       <v-btn color="blue-darken-1" variant="text" @click="saveDialog"
@@ -62,6 +59,7 @@ export default {
     selectedUser: {},
     systemRoles: [],
     roleArray: [],
+    errorMessage: "",
   }),
   methods: {
     async getSystemRoles() {
@@ -73,13 +71,48 @@ export default {
           console.log(err);
         });
     },
-    closeDialog() {},
-    saveDialog() {},
+    saveDialog() {
+      if (!this.isValid()) {
+        return;
+      }
+
+      var data = {};
+      const fName = this.selectedUser.fName.trim();
+      const lName = this.selectedUser.lName.trim();
+
+      if (fName !== this.user.fName) {
+        data.fName = fName;
+      }
+      if (lName !== this.user.lName) {
+        data.lName = lName;
+      }
+
+      if (data !== {}) {
+        //update user
+      }
+    },
+    isValid() {
+      var result = true;
+
+      if (this.selectedUser.fName.trim() == "") {
+        this.errorMessage = "Must have a first name";
+        result = false;
+      } else if (this.selectedUser.lName.trim() == "") {
+        this.errorMessage = "Must have a last name";
+        result = false;
+      }
+
+      return result;
+    },
   },
   async created() {
     this.selectedUser = Object.assign({}, this.user);
+    console.log(this.selectedUser.userRoles);
     this.getSystemRoles();
-    this.roleArray = this.selectedUser.userRoles.map((obj) => obj.role);
+    this.roleArray = this.selectedUser.userRoles
+      .filter((obj) => obj.isActive)
+      .map((obj) => obj.role);
+    this.errorMessage = "";
   },
   props: {
     user: Object,

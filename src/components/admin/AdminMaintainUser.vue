@@ -73,11 +73,10 @@ export default {
         .then((response) => {
           this.users = response.data;
           this.users.forEach((user) => {
-            let roles = [];
-            user.userRoles.forEach((role) => {
-              roles.push(role.role);
-            });
-            user.roles = roles.join(", ");
+            user.roles = user.userRoles
+              .filter((obj) => obj.isActive)
+              .map((obj) => obj.role)
+              .join(", ");
           });
         })
         .catch((err) => {
