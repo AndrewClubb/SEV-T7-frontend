@@ -11,7 +11,7 @@
     >
       <template #top>
         <v-toolbar flat>
-          <v-toolbar-title> EVENTS </v-toolbar-title>
+          <v-toolbar-title> USERS </v-toolbar-title>
           <v-spacer></v-spacer>
           <v-text-field
             v-model="userSearch"
@@ -19,6 +19,8 @@
             label="Search"
             single-line
             hide-details
+            clearable
+            class="mr-2"
           ></v-text-field>
         </v-toolbar>
       </template>
@@ -26,7 +28,7 @@
         <tr>
           <td v-for="(header, index) in userHeaders" :key="index">
             <div v-if="header.title == 'Actions'">
-              <v-icon size="small" class="me-2" @click="editEvent(item.raw)">
+              <v-icon size="small" class="me-2" @click="editUser(item.raw)">
                 mdi-pencil
               </v-icon>
             </div>
@@ -38,6 +40,22 @@
       </template>
     </v-data-table>
   </v-container>
+  <v-dialog v-model="dialog" max-width="750px">
+    <v-card>
+      <v-card-title> Edit User </v-card-title>
+      <v-card-text> </v-card-text>
+      <v-card-actions class="mt-5">
+        <v-spacer></v-spacer>
+        <v-btn color="blue-darken-1" variant="text" @click="closeDialog"
+          >Cancel</v-btn
+        >
+        <v-btn color="blue-darken-1" variant="text" @click="editEventConfirm"
+          >SAVE</v-btn
+        >
+        <v-spacer></v-spacer>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 <script>
 import UserDataService from "../../services/UserDataService";
@@ -49,20 +67,32 @@ export default {
     userHeaders: [
       { title: "First Name", key: "fName" },
       { title: "Last Name", key: "lName" },
-      { title: "Roles", key: "" },
+      { title: "Roles", key: "roles" },
       { title: "Actions", sortable: false, allign: "end" },
     ],
+    selectedUser: {},
+    dialog: false,
   }),
   methods: {
     async getUsers() {
       await UserDataService.getAllWithRoles()
         .then((response) => {
           this.users = response.data;
-          console.log(this.users);
+          this.users.forEach((user) => {
+            let roles = [];
+            user.userRoles.forEach((role) => {
+              roles.push(role.role);
+            });
+            user.roles = roles.join(", ");
+          });
         })
         .catch((err) => {
           console.log(err);
         });
+    },
+    editUser(user) {
+      this.selectedUser = new Object({}, user);
+      this.dialog = true;
     },
   },
   async mounted() {

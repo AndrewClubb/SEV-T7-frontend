@@ -11,7 +11,7 @@ class UserDataService {
   }
 
   getAllWithRoles() {
-    return http.get(this.baseUrl + "roles");
+    return http.get(this.baseUrl + "all/roles");
   }
 
   remove(id) {
