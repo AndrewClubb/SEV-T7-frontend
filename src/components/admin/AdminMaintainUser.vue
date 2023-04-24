@@ -40,8 +40,13 @@
       </template>
     </v-data-table>
   </v-container>
-  <v-dialog v-model="dialog" max-width="750px">
-    <AdminEditUserPopUp :user="selectedUser"></AdminEditUserPopUp>
+  <v-dialog v-model="dialog" width="350px">
+    <AdminEditUserPopUp
+      :user="selectedUser"
+      @close-dialog="dialog = false"
+      @add-column="columns++"
+      @remove-column="columns--"
+    ></AdminEditUserPopUp>
   </v-dialog>
 </template>
 <script>
@@ -60,6 +65,7 @@ export default {
     ],
     selectedUser: {},
     dialog: false,
+    columns: 1,
   }),
   methods: {
     async getUsers() {
@@ -81,6 +87,7 @@ export default {
     editUser(user) {
       this.selectedUser = user;
       this.dialog = true;
+      this.columns = 2;
     },
   },
   async mounted() {
