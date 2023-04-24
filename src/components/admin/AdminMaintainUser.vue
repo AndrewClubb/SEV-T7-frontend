@@ -41,24 +41,12 @@
     </v-data-table>
   </v-container>
   <v-dialog v-model="dialog" max-width="750px">
-    <v-card>
-      <v-card-title> Edit User </v-card-title>
-      <v-card-text> </v-card-text>
-      <v-card-actions class="mt-5">
-        <v-spacer></v-spacer>
-        <v-btn color="blue-darken-1" variant="text" @click="closeDialog"
-          >Cancel</v-btn
-        >
-        <v-btn color="blue-darken-1" variant="text" @click="editEventConfirm"
-          >SAVE</v-btn
-        >
-        <v-spacer></v-spacer>
-      </v-card-actions>
-    </v-card>
+    <AdminEditUserPopUp :user="selectedUser"></AdminEditUserPopUp>
   </v-dialog>
 </template>
 <script>
 import UserDataService from "../../services/UserDataService";
+import AdminEditUserPopUp from "./AdminEditUserPopUp.vue";
 export default {
   name: "adminMaintainUser",
   data: () => ({
@@ -91,12 +79,15 @@ export default {
         });
     },
     editUser(user) {
-      this.selectedUser = new Object({}, user);
+      this.selectedUser = user;
       this.dialog = true;
     },
   },
   async mounted() {
     await this.getUsers();
+  },
+  components: {
+    AdminEditUserPopUp,
   },
 };
 </script>
