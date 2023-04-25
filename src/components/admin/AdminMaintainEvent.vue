@@ -814,6 +814,7 @@ export default {
       this.closeDialog();
     },
     eventAvailability(event) {
+      this.userSearch = "";
       this.selectedEvent = event;
       this.availabilityDialog = true;
     },
