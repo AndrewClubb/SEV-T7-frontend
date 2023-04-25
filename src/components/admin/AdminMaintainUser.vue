@@ -60,6 +60,7 @@ export default {
     userHeaders: [
       { title: "First Name", key: "fName" },
       { title: "Last Name", key: "lName" },
+      { title: "Email", key: "email" },
       { title: "Roles", key: "roles" },
       { title: "Actions", sortable: false, allign: "end" },
     ],
