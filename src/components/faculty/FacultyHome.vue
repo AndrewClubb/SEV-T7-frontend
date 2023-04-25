@@ -107,9 +107,9 @@ export default {
       Utils.setStore("eventId", id);
       this.$router.push({ path: "facultyCreateCritiques" });
     },
-    createAvail() {
-      this.$router.push({ path: "createAvailability" });
-    },
+    // createAvail() {
+    //   this.$router.push({ path: "createAvailability" });
+    // },
     async getStudents() {
       StudentInstrumentDataService.getStudentsForInstructorId(this.userRole.id)
         .then((response) => {
