@@ -52,6 +52,7 @@
   </v-card>
 </template>
 <script>
+import UserDataService from "../../services/UserDataService";
 import UserRoleDataService from "../../services/UserRoleDataService";
 export default {
   name: "adminEditUserPopUp",
@@ -71,25 +72,119 @@ export default {
           console.log(err);
         });
     },
-    saveDialog() {
+    async saveDialog() {
       if (!this.isValid()) {
         return;
       }
 
+      this.updateUser();
+      this.updateRoles();
+
+      this.$emit("updateUser", this.selectedUser);
+      this.$emit("closeDialog");
+    },
+    updateUser() {
       var data = {};
+      var userUpdated = false;
       const fName = this.selectedUser.fName.trim();
       const lName = this.selectedUser.lName.trim();
 
       if (fName !== this.user.fName) {
         data.fName = fName;
+        userUpdated = true;
       }
       if (lName !== this.user.lName) {
         data.lName = lName;
+        userUpdated = true;
       }
 
-      if (data !== {}) {
-        //update user
+      if (userUpdated) {
+        data.id = this.user.id;
+        console.log(data);
+
+        UserDataService.update(data).catch((err) => {
+          console.log(err);
+        });
       }
+    },
+    async updateRoles() {
+      //check if adding a role
+      for (let i = 0; i < this.roleArray.length; i++) {
+        var newRole = this.roleArray[i];
+        var foundRole = this.selectedUser.userRoles.find((oldRole) => {
+          return newRole === oldRole.role;
+        });
+
+        //found an old role
+        if (foundRole !== undefined) {
+          //checking if disabled
+          if (!foundRole.isActive) {
+            const index = this.selectedUser.userRoles.findIndex(
+              (obj) => obj.id === foundRole.id
+            );
+            const data = {
+              id: foundRole.id,
+              isActive: 1,
+            };
+            await UserRoleDataService.update(data)
+              .then((response) => {
+                this.selectedUser.userRoles[index].isActive = 1;
+              })
+              .catch((err) => {
+                console.log(err);
+              });
+          }
+        } else {
+          var data = {
+            role: newRole,
+            isActive: 1,
+            userId: this.selectedUser.id,
+          };
+          if (newRole === "Faculty") {
+            data.isInstructor = 0;
+            data.title = "Professor";
+          }
+          await UserRoleDataService.create(data)
+            .then((response) => {
+              this.selectedUser.userRoles.push(response.data);
+            })
+            .catch((err) => {
+              console.log(err);
+            });
+        }
+      }
+
+      //check if removing a role
+      for (let i = 0; i < this.selectedUser.userRoles.length; i++) {
+        var oldRole = this.selectedUser.userRoles[i];
+        if (
+          this.roleArray.findIndex((newRole) => {
+            return newRole === oldRole.role;
+          }) == -1
+        ) {
+          const index = this.selectedUser.userRoles.findIndex(
+            (obj) => obj.id === oldRole.id
+          );
+          const data = {
+            id: oldRole.id,
+            isActive: 0,
+          };
+          await UserRoleDataService.update(data)
+            .then((response) => {
+              this.selectedUser.userRoles[index].isActive = 0;
+            })
+            .catch((err) => {
+              console.log(err);
+            });
+        }
+      }
+
+      this.selectedUser.roles = await Promise.resolve(
+        this.selectedUser.userRoles
+          .filter((obj) => obj.isActive)
+          .map((obj) => obj.role)
+          .join(", ")
+      );
     },
     isValid() {
       var result = true;
@@ -107,7 +202,6 @@ export default {
   },
   async created() {
     this.selectedUser = Object.assign({}, this.user);
-    console.log(this.selectedUser.userRoles);
     this.getSystemRoles();
     this.roleArray = this.selectedUser.userRoles
       .filter((obj) => obj.isActive)
@@ -117,6 +211,6 @@ export default {
   props: {
     user: Object,
   },
-  emits: ["closeDialog", "addColumn", "removeColumn"],
+  emits: ["closeDialog", "updateUser"],
 };
 </script>

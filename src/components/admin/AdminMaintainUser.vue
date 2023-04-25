@@ -41,11 +41,11 @@
     </v-data-table>
   </v-container>
   <v-dialog v-model="dialog" width="350px">
+    <!-- :user="selectedUser" -->
     <AdminEditUserPopUp
       :user="selectedUser"
       @close-dialog="dialog = false"
-      @add-column="columns++"
-      @remove-column="columns--"
+      @update-user="updateUser"
     ></AdminEditUserPopUp>
   </v-dialog>
 </template>
@@ -65,28 +65,34 @@ export default {
     ],
     selectedUser: {},
     dialog: false,
-    columns: 1,
   }),
   methods: {
     async getUsers() {
       await UserDataService.getAllWithRoles()
         .then((response) => {
           this.users = response.data;
-          this.users.forEach((user) => {
-            user.roles = user.userRoles
-              .filter((obj) => obj.isActive)
-              .map((obj) => obj.role)
-              .join(", ");
+          this.users.forEach(async (user) => {
+            user.roles = await Promise.resolve(
+              user.userRoles
+                .filter((obj) => obj.isActive)
+                .map((obj) => obj.role)
+                .join(", ")
+            );
           });
         })
         .catch((err) => {
           console.log(err);
         });
     },
+    async updateUser(user) {
+      const index = this.users.findIndex((obj) => {
+        return obj.id === user.id;
+      });
+      this.users[index] = user;
+    },
     editUser(user) {
       this.selectedUser = user;
       this.dialog = true;
-      this.columns = 2;
     },
   },
   async mounted() {
