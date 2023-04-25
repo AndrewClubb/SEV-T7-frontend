@@ -6,6 +6,10 @@ class UserRoleDataService {
     return http.post(this.baseUrl, data);
   }
 
+  getUniqueRoles() {
+    return http.get(this.baseUrl + "roles/unique");
+  }
+
   getRolesForUser(userId) {
     return http.get(this.baseUrl + "roles/userId/" + userId);
   }

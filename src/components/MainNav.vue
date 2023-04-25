@@ -186,6 +186,11 @@ export default {
         roles: "Faculty, Accompanist",
       },
       {
+        link: "adminViewUsers",
+        text: "Users",
+        roles: "Admin",
+      },
+      {
         link: "adminViewEvents",
         text: "Events",
         roles: "Admin",

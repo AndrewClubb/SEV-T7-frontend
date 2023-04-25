@@ -14,8 +14,6 @@ export default {
   name: "login_signup_social",
   data() {
     return {
-      fName: "",
-      lName: "",
       roleCounter: 0,
       user: {},
     };
@@ -55,9 +53,17 @@ export default {
           this.user = response.data;
           Utils.setStore("user", this.user);
           Utils.setStore("userRole", { role: this.user.lastRole });
-          this.fName = this.user.fName;
-          this.lName = this.user.lName;
-          this.$router.push({ name: "base" });
+          if (this.user.lastRole == "Faculty") {
+            this.$router.push({ path: "facultyHome" });
+          } else if (this.user.lastRole == "Student") {
+            this.$router.push({ path: "studentHome" });
+          } else if (this.user.lastRole == "Admin") {
+            this.$router.push({ path: "adminHome" });
+          } else if (this.user.lastRole == "Accompanist") {
+            this.$router.push({ path: "createAvailability" });
+          } else {
+            this.$router.push({ path: "base" });
+          }
         })
         .catch((error) => {
           console.log("error", error);
