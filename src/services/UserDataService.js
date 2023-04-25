@@ -6,6 +6,14 @@ class UserDataService {
     return http.post(this.baseUrl, data);
   }
 
+  getAll() {
+    return http.get(this.baseUrl);
+  }
+
+  getAllWithRoles() {
+    return http.get(this.baseUrl + "all/roles");
+  }
+
   remove(id) {
     return http.delete(this.baseUrl + id);
   }
