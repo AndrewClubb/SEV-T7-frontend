@@ -45,6 +45,7 @@
   <v-dialog v-model="showDialog" :style="{ width: '875px' }" class="mx-auto">
     <AvailabilityPopUp
       :event-id="eventId"
+      :user-id="user.userId"
       @closeDialog="showDialog = false"
     ></AvailabilityPopUp>
   </v-dialog>
@@ -52,6 +53,7 @@
 <script>
 import EventDataService from "../../services/EventDataService";
 import AvailabilityPopUp from "./AvailabilityPopUp.vue";
+import Utils from "../../config/utils";
 export default {
   name: "createAvailability",
   data: () => ({
@@ -65,6 +67,7 @@ export default {
     events: [],
     showDialog: false,
     eventId: null,
+    user: {},
   }),
   methods: {
     async retrieveEventsDateAndAfter(date) {
@@ -84,6 +87,7 @@ export default {
     },
   },
   async mounted() {
+    this.user = Utils.getStore("user");
     this.currentDate = new Date();
     let dateString = this.currentDate.toISOString().substring(0, 10);
     await this.retrieveEventsDateAndAfter(dateString);

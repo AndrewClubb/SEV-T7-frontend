@@ -164,13 +164,11 @@
 </template>
 <script>
 import EventDataService from "../../services/EventDataService";
-import Utils from "../../config/utils.js";
 import AvailabilityDataService from "../../services/AvailabilityDataService";
 export default {
   name: "availabilityPopUp",
   data: () => ({
     selectedEvent: {},
-    user: {},
     userAvailability: [],
     availabilitySlots: [],
     availabilityStart: null,
@@ -206,7 +204,7 @@ export default {
         });
     },
     async getAvailabilityForUser() {
-      await AvailabilityDataService.getByUser(this.user.userId)
+      await AvailabilityDataService.getByUser(this.userId)
         .then((response) => {
           this.userAvailability = response.data;
         })
@@ -279,7 +277,7 @@ export default {
         date: this.selectedEvent.date,
         startTime: this.availabilityStart.value,
         endTime: this.availabilityEnd.value,
-        userId: this.user.userId,
+        userId: this.userId,
         eventId: this.selectedEvent.id,
       };
       if (!this.checkForOverlap(data)) {
@@ -419,7 +417,6 @@ export default {
     },
     async reset() {
       await this.getEvent();
-      this.user = Utils.getStore("user");
       await this.getAvailabilityForUser();
 
       this.errorMessage = "";
@@ -434,6 +431,7 @@ export default {
   },
   props: {
     eventId: Number,
+    userId: Number,
   },
   emits: ["closeDialog"],
 };
