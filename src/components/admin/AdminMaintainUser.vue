@@ -17,7 +17,7 @@
           <v-text-field
             v-model="userSearch"
             append-icon="mdi-magnify"
-            label="Search"
+            label="Search by name, email, or role"
             single-line
             hide-details
             clearable
