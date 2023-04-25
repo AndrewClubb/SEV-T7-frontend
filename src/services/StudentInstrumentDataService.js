@@ -10,6 +10,10 @@ class StudentInstrumentDataService {
     return http.get(this.baseUrl + "userId/" + userId);
   }
 
+  getStudentsForInstructorId(id) {
+    return http.get(this.baseUrl + "students/instructorId/" + id);
+  }
+
   create(data) {
     return http.post(this.baseUrl, data);
   }
