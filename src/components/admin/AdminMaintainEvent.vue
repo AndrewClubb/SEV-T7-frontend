@@ -45,16 +45,26 @@
               {{ this.formatTime(item.columns[header.key]) }}
             </div>
             <div v-else-if="header.title == 'Actions'">
-              <v-icon size="small" class="me-2" @click="editEvent(item.raw)">
-                mdi-pencil
-              </v-icon>
-              <v-icon
-                v-if="this.compareDates(item.raw.date) > 0"
-                size="small"
-                @click="deleteEvent(item.raw)"
-              >
-                mdi-delete
-              </v-icon>
+              <div v-if="this.compareDates(item.raw.date) > 0">
+                <v-icon size="small" class="me-2" @click="editEvent(item.raw)">
+                  mdi-pencil
+                </v-icon>
+                <v-icon size="small" @click="deleteEvent(item.raw)">
+                  mdi-delete
+                </v-icon>
+                <v-btn
+                  size="small"
+                  class="ml-2"
+                  @click="eventAvailability(item.raw)"
+                >
+                  Availability
+                </v-btn>
+              </div>
+              <div v-else>
+                <v-icon size="small" class="me-2" @click="editEvent(item.raw)">
+                  mdi-pencil
+                </v-icon>
+              </div>
             </div>
             <div v-else>
               {{ item.columns[header.key] }}
@@ -251,6 +261,74 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
+  <v-dialog v-model="availabilityDialog" max-width="900px">
+    <v-card>
+      <v-card-title> Event Availability </v-card-title>
+      <v-divider></v-divider>
+      <v-card-text>
+        <v-data-table
+          :sort-by="[{ key: 'lName', order: 'asc' }]"
+          :headers="userHeaders"
+          :items="users"
+          :search="userSearch"
+          items-per-page="5"
+          class="elevation-1"
+        >
+          <template #top>
+            <v-toolbar flat>
+              <v-toolbar-title> USERS </v-toolbar-title>
+              <v-spacer></v-spacer>
+              <v-text-field
+                v-model="userSearch"
+                label="Search by name or email"
+                single-line
+                hide-details
+                clearable
+                class="mr-2"
+              ></v-text-field>
+            </v-toolbar>
+          </template>
+          <template #item="{ item }">
+            <tr>
+              <td v-for="(header, index) in userHeaders" :key="index">
+                <div v-if="header.title == 'Actions'">
+                  <v-btn
+                    size="small"
+                    class="ml-2"
+                    @click="userAvailability(item.raw)"
+                  >
+                    Availability
+                  </v-btn>
+                </div>
+                <div v-else>
+                  {{ item.columns[header.key] }}
+                </div>
+              </td>
+            </tr>
+          </template>
+        </v-data-table>
+      </v-card-text>
+      <v-card-actions>
+        <v-btn
+          color="blue-darken-1"
+          variant="text"
+          @click="availabilityDialog = false"
+          >Close</v-btn
+        >
+      </v-card-actions>
+    </v-card>
+    <v-dialog
+      v-model="userAvailabilityDialog"
+      :style="{ width: '875px' }"
+      class="mx-auto"
+    >
+      <AvailabilityPopUp
+        :event-id="selectedEvent.id"
+        :user-id="selectedUser.id"
+        @closeDialog="userAvailabilityDialog = false"
+      ></AvailabilityPopUp>
+    </v-dialog>
+  </v-dialog>
 </template>
 <script>
 import SemesterDataService from "../../services/SemesterDataService";
@@ -258,6 +336,8 @@ import EventDataService from "../../services/EventDataService";
 import EventTimeDataService from "../../services/EventTimeDataService";
 import VueTimePicker from "vue3-timepicker";
 import "vue3-timepicker/dist/VueTimepicker.css";
+import UserDataService from "../../services/UserDataService";
+import AvailabilityPopUp from "../faculty/AvailabilityPopUp.vue";
 export default {
   name: "adminMaintainEvent",
   data: () => ({
@@ -287,6 +367,17 @@ export default {
     isEdit: null,
     dateCompareResult: null,
     confirmPastEvent: false,
+    availabilityDialog: false,
+    users: [],
+    userSearch: "",
+    userHeaders: [
+      { title: "First Name", key: "fName" },
+      { title: "Last Name", key: "lName" },
+      { title: "Email", key: "email" },
+      { title: "Actions", sortable: false, allign: "end" },
+    ],
+    selectedUser: {},
+    userAvailabilityDialog: false,
   }),
   methods: {
     async retrieveAllSemesters() {
@@ -722,13 +813,41 @@ export default {
       this.getAllEventTypes();
       this.closeDialog();
     },
+    eventAvailability(event) {
+      this.userSearch = "";
+      this.selectedEvent = event;
+      this.availabilityDialog = true;
+    },
+    userAvailability(user) {
+      this.selectedUser = user;
+      this.userAvailabilityDialog = true;
+    },
+    async getUsers() {
+      await UserDataService.getAllWithRoles()
+        .then((response) => {
+          this.users = response.data.filter((user) => {
+            const index = user.userRoles.findIndex((role) => {
+              return (
+                role.isActive &&
+                (role.role === "Faculty" || role.role === "Accompanist")
+              );
+            });
+
+            return index != -1;
+          });
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
   },
-  components: { "vue-timepicker": VueTimePicker },
+  components: { "vue-timepicker": VueTimePicker, AvailabilityPopUp },
   async mounted() {
     await this.retrieveAllSemesters();
     await this.getCurrentSemester();
     await this.semesterUpdated();
     this.getAllEventTypes();
+    this.getUsers();
   },
 };
 </script>
