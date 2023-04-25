@@ -280,18 +280,12 @@
               <v-spacer></v-spacer>
               <v-text-field
                 v-model="userSearch"
-                label="Search by name, email, or role"
+                label="Search by name or email"
                 single-line
                 hide-details
                 clearable
                 class="mr-2"
               ></v-text-field>
-              <v-btn
-                color="blue-darken-1"
-                variant="text"
-                @click="availabilityDialog = false"
-                >Close</v-btn
-              >
             </v-toolbar>
           </template>
           <template #item="{ item }">
@@ -314,6 +308,14 @@
           </template>
         </v-data-table>
       </v-card-text>
+      <v-card-actions>
+        <v-btn
+          color="blue-darken-1"
+          variant="text"
+          @click="availabilityDialog = false"
+          >Close</v-btn
+        >
+      </v-card-actions>
     </v-card>
     <v-dialog
       v-model="userAvailabilityDialog"
@@ -372,7 +374,6 @@ export default {
       { title: "First Name", key: "fName" },
       { title: "Last Name", key: "lName" },
       { title: "Email", key: "email" },
-      { title: "Roles", key: "roles" },
       { title: "Actions", sortable: false, allign: "end" },
     ],
     selectedUser: {},
@@ -823,14 +824,15 @@ export default {
     async getUsers() {
       await UserDataService.getAllWithRoles()
         .then((response) => {
-          this.users = response.data;
-          this.users.forEach(async (user) => {
-            user.roles = await Promise.resolve(
-              user.userRoles
-                .filter((obj) => obj.isActive)
-                .map((obj) => obj.role)
-                .join(", ")
-            );
+          this.users = response.data.filter((user) => {
+            const index = user.userRoles.findIndex((role) => {
+              return (
+                role.isActive &&
+                (role.role === "Faculty" || role.role === "Accompanist")
+              );
+            });
+
+            return index != -1;
           });
         })
         .catch((err) => {
