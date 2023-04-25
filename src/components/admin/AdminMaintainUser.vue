@@ -4,6 +4,7 @@
   </v-card>
   <v-container>
     <v-data-table
+      :sort-by="[{ key: 'lName', order: 'asc' }]"
       :headers="userHeaders"
       :items="users"
       :search="userSearch"
