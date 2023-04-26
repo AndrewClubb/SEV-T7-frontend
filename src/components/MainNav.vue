@@ -161,11 +161,11 @@ export default {
         text: "Repertoire",
         roles: "Student",
       },
-      {
-        link: "studentUpcomingEvents",
-        text: "Upcoming Events",
-        roles: "Student",
-      },
+      // {
+      //   link: "studentUpcomingEvents",
+      //   text: "Upcoming Events",
+      //   roles: "Student",
+      // },
       {
         link: "studentEventSignUps",
         text: "Event Sign-Ups",
@@ -181,11 +181,11 @@ export default {
         text: "View Student Critiques",
         roles: "Faculty",
       },
-      {
-        link: "facultyCreateCritiques",
-        text: "Create Event Critique",
-        roles: "Faculty",
-      },
+      // {
+      //   link: "facultyCreateCritiques",
+      //   text: "Create Event Critique",
+      //   roles: "Faculty",
+      // },
       {
         link: "createAvailability",
         text: "Event Availability",
