@@ -140,7 +140,6 @@ export default {
       )
         .then((response) => {
           this.events = response.data;
-          console.log(this.events);
         })
         .catch((e) => {
           console.log(e);
