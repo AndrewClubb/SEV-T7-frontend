@@ -82,9 +82,10 @@
                   class="pa-1 ma-0 d-flex justify-center"
                 >
                   <v-btn
+                    v-if="!this.isDisabled(time)"
                     :style="{ width: '180px' }"
-                    :disabled="this.isDisabled(time)"
                     size="large"
+                    :disabled="this.isDisabled(time)"
                     elevation="6"
                     class="pa-0 pl-auto ma-1 mt-3"
                     :color="time.color"
@@ -125,16 +126,14 @@
                 :no-data-text="noPieceDataText"
                 :style="{ width: '175px' }"
               ></v-autocomplete>
-              <v-btn
-                v-if="selectedEvent.type === 'Jury'"
-                class="pa-1 ma-3"
-                @click="addPiece()"
-              >
+              <!-- v-if="selectedEvent.type === 'Jury'" -->
+              <v-btn class="pa-1 ma-3" @click="addPiece()">
                 Add To Repertoire
               </v-btn>
             </v-col>
-            <!-- If its a jury have the ability to add songs -->
-            <v-col v-if="selectedEvent.type === 'Jury'" cols="7">
+            <!-- If its a jury have the ability to add songs
+            v-if="selectedEvent.type === 'Jury'" -->
+            <v-col cols="7">
               <!-- semester, stuInstrument, song -->
               <v-btn class="pa-1 ma-3" @click="removePiece()">
                 Delete From Repertoire
@@ -166,11 +165,11 @@
               </v-sheet>
             </v-col>
           </v-row>
-          <v-row>
+          <!-- <v-row>
             <input class="pa-1 ma-1" type="checkbox" v-model="transBool" />
             <label for="checkbox"> Foreign Translation </label>
-          </v-row>
-          <v-row>
+          </v-row> -->
+          <!-- <v-row>
             <v-textarea
               v-if="selectedEvent.type === 'Jury'"
               :disabled="!transBool || selectedPiece.id == undefined"
@@ -187,7 +186,7 @@
               variant="outlined"
             >
             </v-textarea>
-          </v-row>
+          </v-row> -->
         </v-col>
       </v-row>
       <v-row class="pa-1 ma-1">
@@ -219,10 +218,16 @@
   </v-card>
   <v-dialog v-model="requestDialog" max-width="500px">
     <v-card>
-      <v-card-text class="text-h5" align="center"
-        >You are requesting for a new timeslot or to swap, would you like to
-        proceed?</v-card-text
-      >
+      <v-card-text class="text-h5" align="center">
+        {{
+          "You are requesting to take timeslot: " +
+          this.formatTime(this.selectedEventTimes[0].startTime) +
+          "-" +
+          this.formatTime(this.selectedEventTimes[0].endTime) +
+          " from "
+        }}
+      </v-card-text>
+      <v-card-text> Are you sure this is what you want to do? </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn
@@ -232,7 +237,7 @@
           >Cancel</v-btn
         >
         <v-btn color="blue-darken-1" variant="text" @click="approvedDialog()"
-          >OK</v-btn
+          >REQUEST</v-btn
         >
         <v-spacer></v-spacer>
       </v-card-actions>
@@ -313,7 +318,9 @@ export default {
       if (this.selectedStudentInstrument == null) {
         result = true;
       } else if (eventTimeslot.isReserved == "1") {
-        result = true;
+        // result = true;
+        eventTimeslot.color = "#804752";
+        //find way to get student associated
       } else if (!this.isTimeslotInAvail(eventTimeslot, this.instAvail)) {
         result = true;
       } else if (
@@ -385,7 +392,7 @@ export default {
       if (this.selectedEvent.type !== "Jury") {
         const timeslotSongData = {
           timeslotId: this.selectedEventTimes[0].id,
-          songId: this.selectedSong.id,
+          songId: this.selectedPiece.id,
         };
 
         TimeslotSongDataService.create(timeslotSongData).catch((err) => {
@@ -397,7 +404,7 @@ export default {
             type: "User",
             text: this.translation,
             language: "English",
-            songId: this.selectedSong.id,
+            songId: this.selectedPiece.id,
           };
 
           SongTranslationDataService.create(translationData).catch((err) => {
@@ -408,7 +415,8 @@ export default {
         this.currentRepertoire.forEach((song) => {
           const timeslotSongData = {
             timeslotId: this.selectedEventTimes[0].id,
-            songId: song.id,
+            // songId: song.id,
+            songId: this.selectedPiece.id,
           };
 
           TimeslotSongDataService.create(timeslotSongData).catch((err) => {
@@ -452,6 +460,7 @@ export default {
         });
       }
 
+      // timeslot.color = "#804752";
       this.$emit("closeDialog");
       this.$emit("successAlert");
     },
@@ -528,16 +537,20 @@ export default {
         if (this.repertoire[index].repertoire.length > -1) {
           return result;
         }
-      } else if (
-        this.selectedComposer === null ||
-        this.selectedComposer === ""
-      ) {
-        this.errorMessage = "Select your composer.";
-        result = false;
-      } else if (this.selectedSong === null || this.selectedSong === "") {
-        this.errorMessage = "Select your piece.";
+      } else if (this.selectedPiece === null || this.selectedPiece === "") {
+        this.errorMessage = "Select a piece from your repertoire.";
         result = false;
       }
+      // else if (
+      //   this.selectedComposer === null ||
+      //   this.selectedComposer === ""
+      // ) {
+      //   this.errorMessage = "Select your composer.";
+      //   result = false;
+      // } else if (this.selectedSong === null || this.selectedSong === "") {
+      //   this.errorMessage = "Select your piece.";
+      //   result = false;
+      // }
       return result;
     },
     async showAvailability() {

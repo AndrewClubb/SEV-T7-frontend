@@ -147,7 +147,6 @@ export default {
       StudentInstrumentDataService.getByUser(this.user.userId)
         .then((response) => {
           this.studentInstruments = response.data;
-          console.log(this.studentInstruments);
         })
         .catch((err) => {
           console.log(err);
@@ -184,10 +183,6 @@ export default {
       // Utils.setStore("eventId", id);
       this.$router.push({ path: "studentCritiques" });
     },
-    // goSignUp(id) {
-    //   Utils.setStore("eventId", id);
-    //   this.$router.push({ path: "studentEventSignUps" });
-    // },
     async getEvents() {
       await EventDataService.getBySemester(this.semester.id)
         .then((response) => {
@@ -227,13 +222,11 @@ export default {
     },
     async getUserRole() {
       this.user = Utils.getStore("user");
-      console.log(this.user);
       await UserRoleDataService.getRolesForUser(this.user.userId)
         .then((response) => {
           this.userRole = response.data.find((obj) => {
             return obj.role === Utils.getStore("userRole").role;
           });
-          console.log("user", this.user);
         })
         .catch((e) => {
           console.log(e);
