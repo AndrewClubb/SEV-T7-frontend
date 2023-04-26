@@ -279,7 +279,6 @@ export default {
       this.timeslots = [];
       await EventDataService.getStudentTimeslotsForEvent(this.eventId)
         .then((response) => {
-          console.log("hi", response.data);
           this.timeslots = response.data[0];
 
           this.timeslots.eventTimeslots.forEach((obj) => {
