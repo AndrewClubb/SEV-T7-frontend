@@ -675,7 +675,6 @@ export default {
   },
   async mounted() {
     this.eventId = Utils.getStore("eventId");
-    console.log(this.eventId);
     this.getFacultyId();
     await this.fillTimeslots();
     await this.fillHasCritiques();
