@@ -21,36 +21,34 @@
               <template v-slot:activator="{ props }">
                 <v-btn
                   variant="text"
-                  @click="viewStuRep(student.studentId)"
+                  @click="viewStuRep(student.id)"
                   v-bind="props"
                 >
-                  {{
-                    student.student.user.fName +
-                    " " +
-                    student.student.user.lName
-                  }}
+                  {{ student.fName + " " + student.lName }}
                 </v-btn>
               </template>
               <v-card>
                 <v-card-title>
-                  <v-avatar v-if="student.student.user.picture">
-                    <v-img :src="student.student.user.picture"></v-img
+                  <v-avatar v-if="student.picture">
+                    <v-img :src="student.picture"></v-img
                   ></v-avatar>
-                  {{ student.instrument.name }}
                 </v-card-title>
-                <v-divider></v-divider>
-                <v-card-text v-if="student.level">
-                  {{ "Vocal level: " + student.level }}
-                </v-card-text>
-                <v-card-text v-if="student.student.stuMajor">
-                  {{ "Major: " + student.student.stuMajor }}
-                </v-card-text>
+                <v-divider v-if="student.picture"></v-divider>
                 <v-card-text>
-                  {{ "Contact: " + student.student.user.email }}
+                  <div v-if="student.userRoles[0].stuMajor">
+                    {{ "Major: " + student.userRoles[0].stuMajor }}
+                  </div>
+                  {{ "Contact: " + student.email }}
+                  <div v-for="stuInstrument in student.userRoles[0].student">
+                    <v-divider></v-divider>
+                    {{ stuInstrument.instrument.name }}
+                    <div v-if="stuInstrument.level">
+                      {{ "Vocal level: " + stuInstrument.level }}
+                    </div>
+                  </div>
                 </v-card-text>
               </v-card>
             </v-menu>
-
             <v-divider v-if="index < students.length - 1"></v-divider>
           </v-card-title>
         </v-card>
@@ -140,9 +138,6 @@ export default {
       Utils.setStore("eventId", id);
       this.$router.push({ path: "facultyCreateCritiques" });
     },
-    // createAvail() {
-    //   this.$router.push({ path: "createAvailability" });
-    // },
     async getStudents() {
       StudentInstrumentDataService.getStudentsForInstructorId(this.userRole.id)
         .then((response) => {
@@ -160,7 +155,6 @@ export default {
           this.userRole = response.data.find((obj) => {
             return obj.role === Utils.getStore("userRole").role;
           });
-          console.log("user", this.user);
         })
         .catch((e) => {
           console.log(e);
@@ -182,7 +176,6 @@ export default {
       await SemesterDataService.getCurrent(dateString)
         .then((response) => {
           this.semester = response.data[0];
-          console.log(this.semester.id);
         })
         .catch((e) => {
           console.log(e);
@@ -199,7 +192,6 @@ export default {
               return 1;
             }
           });
-          console.log(this.events);
         })
         .catch((err) => {
           console.log(err);
