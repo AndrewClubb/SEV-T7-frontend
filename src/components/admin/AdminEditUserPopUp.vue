@@ -9,6 +9,9 @@
     </v-card-title>
     <v-divider></v-divider>
     <v-card-text>
+      <v-row class="ml-1">
+        <strong class="text-red-lighten-1">{{ this.errorMessage }}</strong>
+      </v-row>
       <v-row class="mt-1">
         <!-- Generic col-->
         <v-col>
