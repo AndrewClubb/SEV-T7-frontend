@@ -184,10 +184,6 @@ export default {
       // Utils.setStore("eventId", id);
       this.$router.push({ path: "studentCritiques" });
     },
-    // goSignUp(id) {
-    //   Utils.setStore("eventId", id);
-    //   this.$router.push({ path: "studentEventSignUps" });
-    // },
     async getEvents() {
       await EventDataService.getBySemester(this.semester.id)
         .then((response) => {
