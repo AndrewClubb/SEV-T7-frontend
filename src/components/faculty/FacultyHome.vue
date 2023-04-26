@@ -143,7 +143,6 @@ export default {
       StudentInstrumentDataService.getStudentsForInstructorId(this.userRole.id)
         .then((response) => {
           this.students = response.data;
-          console.log(this.students);
         })
         .catch((err) => {
           console.log(err);

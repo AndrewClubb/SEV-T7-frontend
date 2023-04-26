@@ -320,7 +320,6 @@ export default {
       } else if (eventTimeslot.isReserved == "1") {
         // result = true;
         eventTimeslot.color = "#804752";
-        console.log("timeslot", eventTimeslot);
         //find way to get student associated
       } else if (!this.isTimeslotInAvail(eventTimeslot, this.instAvail)) {
         result = true;

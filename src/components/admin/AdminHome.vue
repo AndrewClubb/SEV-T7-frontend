@@ -81,13 +81,11 @@ export default {
     },
     async getUserRole() {
       this.user = Utils.getStore("user");
-      console.log(this.user);
       await UserRoleDataService.getRolesForUser(this.user.userId)
         .then((response) => {
           this.userRole = response.data.find((obj) => {
             return obj.role === Utils.getStore("userRole").role;
           });
-          console.log("user", this.user);
         })
         .catch((e) => {
           console.log(e);
