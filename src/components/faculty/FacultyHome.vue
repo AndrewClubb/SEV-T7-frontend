@@ -32,15 +32,16 @@
                   <v-avatar v-if="student.picture">
                     <v-img :src="student.picture"></v-img
                   ></v-avatar>
+                  {{ student.fName + " " + student.lName }}
                 </v-card-title>
-                <v-divider v-if="student.picture"></v-divider>
+                <v-divider></v-divider>
                 <v-card-text>
                   <div v-if="student.userRoles[0].stuMajor">
                     {{ "Major: " + student.userRoles[0].stuMajor }}
                   </div>
                   {{ "Contact: " + student.email }}
+                  <v-divider></v-divider>
                   <div v-for="stuInstrument in student.userRoles[0].student">
-                    <v-divider></v-divider>
                     {{ stuInstrument.instrument.name }}
                     <div v-if="stuInstrument.level">
                       {{ "Vocal level: " + stuInstrument.level }}
