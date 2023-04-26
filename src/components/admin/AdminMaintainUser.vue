@@ -16,13 +16,13 @@
           <v-spacer></v-spacer>
           <v-text-field
             v-model="userSearch"
-            append-icon="mdi-magnify"
             label="Search by name, email, or role"
             single-line
             hide-details
             clearable
             class="mr-2"
           ></v-text-field>
+          <v-btn color="primary" @click="addUser()">Add User</v-btn>
         </v-toolbar>
       </template>
       <template #item="{ item }">
@@ -42,17 +42,24 @@
     </v-data-table>
   </v-container>
   <v-dialog v-model="dialog" width="350px">
-    <!-- :user="selectedUser" -->
     <AdminEditUserPopUp
       :user="selectedUser"
       @close-dialog="dialog = false"
       @update-user="updateUser"
     ></AdminEditUserPopUp>
   </v-dialog>
+  <v-dialog v-model="newUserDialog" width="350px">
+    <AdminNewUserPopUp
+      :users="users"
+      @close-dialog="newUserDialog = false"
+      @new-user="newUser"
+    ></AdminNewUserPopUp>
+  </v-dialog>
 </template>
 <script>
 import UserDataService from "../../services/UserDataService";
 import AdminEditUserPopUp from "./AdminEditUserPopUp.vue";
+import AdminNewUserPopUp from "./AdminNewUserPopUp.vue";
 export default {
   name: "adminMaintainUser",
   data: () => ({
@@ -67,6 +74,7 @@ export default {
     ],
     selectedUser: {},
     dialog: false,
+    newUserDialog: false,
   }),
   methods: {
     async getUsers() {
@@ -86,7 +94,7 @@ export default {
           console.log(err);
         });
     },
-    async updateUser(user) {
+    updateUser(user) {
       const index = this.users.findIndex((obj) => {
         return obj.id === user.id;
       });
@@ -96,12 +104,19 @@ export default {
       this.selectedUser = user;
       this.dialog = true;
     },
+    addUser() {
+      this.newUserDialog = true;
+    },
+    newUser(user) {
+      this.users.push(user);
+    },
   },
   async mounted() {
     await this.getUsers();
   },
   components: {
     AdminEditUserPopUp,
+    AdminNewUserPopUp,
   },
 };
 </script>
