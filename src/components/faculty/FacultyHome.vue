@@ -17,11 +17,36 @@
             v-for="(student, index) in students"
             :key="index"
           >
-            <v-btn @click="viewStuRep(student.studentId)">
-              {{
-                student.student.user.fName + " " + student.student.user.lName
-              }}
-            </v-btn>
+            <v-menu open-on-hover>
+              <template v-slot:activator="{ props }">
+                <v-btn @click="viewStuRep(student.studentId)" v-bind="props">
+                  {{
+                    student.student.user.fName +
+                    " " +
+                    student.student.user.lName
+                  }}
+                </v-btn>
+              </template>
+              <v-card>
+                <v-card-title>
+                  <v-avatar v-if="student.student.user.picture">
+                    <v-img :src="student.student.user.picture"></v-img
+                  ></v-avatar>
+                  {{ student.instrument.name }}
+                </v-card-title>
+                <v-divider></v-divider>
+                <v-card-text v-if="student.level">
+                  {{ "Vocal level: " + student.level }}
+                </v-card-text>
+                <v-card-text v-if="student.student.stuMajor">
+                  {{ "Major: " + student.student.stuMajor }}
+                </v-card-text>
+                <v-card-text>
+                  {{ "Contact: " + student.student.user.email }}
+                </v-card-text>
+              </v-card>
+            </v-menu>
+
             <v-divider v-if="index < students.length - 1"></v-divider>
           </v-card-title>
         </v-card>
@@ -102,6 +127,9 @@ export default {
   methods: {
     viewCrit() {
       this.$router.push({ path: "facultyViewCritiques" });
+    },
+    viewStuRep() {
+      this.$router.push({ path: "facultyViewRepertoire" });
     },
     createCrit(id) {
       Utils.setStore("eventId", id);

@@ -8,6 +8,26 @@
     <v-row>
       <v-col>
         <v-card>
+          <v-card-title>
+            <v-avatar v-if="user.picture">
+              <v-img :src="user.picture"></v-img
+            ></v-avatar>
+            {{ student.instrument.name }}
+          </v-card-title>
+          <v-divider></v-divider>
+          <v-card-text v-if="student.level">
+            {{ "Vocal level: " + student.level }}
+          </v-card-text>
+          <v-card-text v-if="student.student.stuMajor">
+            {{ "Major: " + student.student.stuMajor }}
+          </v-card-text>
+          <v-card-text>
+            {{ "Contact: " + student.student.user.email }}
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col>
+        <v-card>
           <v-card-title> Event Tasks: </v-card-title>
           <v-divider></v-divider>
           <div v-for="(event, index) in events" :key="index">

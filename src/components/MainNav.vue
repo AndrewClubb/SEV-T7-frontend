@@ -79,7 +79,8 @@
       <template v-slot:activator="{ props }">
         <v-btn v-bind="props" icon x-large>
           <v-avatar v-if="user != null" color="secondary">
-            <span class="accent--text font-weight-bold">{{ initials }}</span>
+            <v-img :src="user.picture"></v-img>
+            <!-- <span class="accent--text font-weight-bold">{{ initials }}</span> -->
           </v-avatar>
         </v-btn>
       </template>
@@ -87,7 +88,8 @@
         <v-card-text>
           <div class="mx-auto text-center">
             <v-avatar color="secondary" class="mt-2 mb-2">
-              <span class="accent--text font-weight-bold">{{ initials }}</span>
+              <!-- <span class="accent--text font-weight-bold">{{ initials }}</span> -->
+              <v-img :src="user.picture"></v-img>
             </v-avatar>
             <h3>{{ name }}</h3>
             <p class="text-caption mt-1">
