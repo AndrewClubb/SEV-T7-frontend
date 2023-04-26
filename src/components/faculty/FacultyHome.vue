@@ -19,7 +19,11 @@
           >
             <v-menu open-on-hover>
               <template v-slot:activator="{ props }">
-                <v-btn @click="viewStuRep(student.studentId)" v-bind="props">
+                <v-btn
+                  variant="text"
+                  @click="viewStuRep(student.studentId)"
+                  v-bind="props"
+                >
                   {{
                     student.student.user.fName +
                     " " +
@@ -100,6 +104,7 @@
   <v-dialog v-model="showDialog" :style="{ width: '875px' }" class="mx-auto">
     <AvailabilityPopUp
       :event-id="eventId"
+      :user-id="user.userId"
       @closeDialog="showDialog = false"
     ></AvailabilityPopUp>
   </v-dialog>

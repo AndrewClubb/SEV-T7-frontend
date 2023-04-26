@@ -1,30 +1,72 @@
 <template>
   <v-card>
     <v-card-title>
-      {{ "Welcome " + " " + user.fName + " " + user.lName + "!" }}
+      {{ "Welcome " + user.fName + " " + user.lName + "!" }}
     </v-card-title>
   </v-card>
   <v-container>
     <v-row>
-      <v-col>
-        <v-card>
-          <v-card-title>
-            <v-avatar v-if="user.picture">
-              <v-img :src="user.picture"></v-img
-            ></v-avatar>
-            {{ student.instrument.name }}
-          </v-card-title>
-          <v-divider></v-divider>
-          <v-card-text v-if="student.level">
-            {{ "Vocal level: " + student.level }}
-          </v-card-text>
-          <v-card-text v-if="student.student.stuMajor">
-            {{ "Major: " + student.student.stuMajor }}
-          </v-card-text>
-          <v-card-text>
-            {{ "Contact: " + student.student.user.email }}
-          </v-card-text>
-        </v-card>
+      <v-col cols="3">
+        <v-row class="pb-6 pr-8 pt-3">
+          <v-card>
+            <v-card-title>
+              <v-avatar v-if="user.picture">
+                <v-img :src="user.picture"></v-img
+              ></v-avatar>
+              <span v-else class="accent--text font-weight-bold">
+                {{ initials }}
+              </span>
+              Details:
+            </v-card-title>
+            <v-divider></v-divider>
+            <v-card-text v-if="user.stuMajor">
+              {{ "Major: " + studentInstruments.student.stuMajor }}
+            </v-card-text>
+            <v-card-text>
+              {{ "Email: " + user.email }}
+            </v-card-text>
+          </v-card>
+        </v-row>
+        <v-row>
+          <v-card>
+            <v-card-title align="center"> Your Instruments </v-card-title>
+            <v-divider></v-divider>
+            <v-card-title
+              align="center"
+              v-for="(studentInstrument, index) in studentInstruments"
+              :key="index"
+            >
+              <v-menu open-on-hover>
+                <template v-slot:activator="{ props }">
+                  <v-btn variant="text" @click="viewStuRep()" v-bind="props">
+                    {{ studentInstrument.instrument.name }}
+                  </v-btn>
+                </template>
+                <v-card>
+                  <v-card-title>
+                    {{ studentInstrument.instrument.name }}
+                  </v-card-title>
+                  <v-divider></v-divider>
+                  <v-card-text v-if="studentInstrument.level">
+                    {{ "Vocal level: " + studentInstrument.level }}
+                  </v-card-text>
+                  <v-card-text v-if="studentInstrument.faculty.user">
+                    {{
+                      "Instructor: " +
+                      studentInstrument.faculty.user.fName +
+                      " " +
+                      studentInstrument.faculty.user.lName
+                    }}
+                  </v-card-text>
+                </v-card>
+              </v-menu>
+
+              <v-divider
+                v-if="index < studentInstruments.length - 1"
+              ></v-divider>
+            </v-card-title>
+          </v-card>
+        </v-row>
       </v-col>
       <v-col>
         <v-card>
@@ -61,24 +103,6 @@
             </v-card-title>
             <v-divider inset></v-divider>
           </div>
-          <!-- <v-card-title> Event Tasks: </v-card-title>
-          <v-divider></v-divider>
-          <v-card-title>
-            <div class="d-flex justify-space-between">
-              April 18 | Recital Hearing
-              <v-btn color="primary" @click="viewCrit()">
-                View Critiques
-              </v-btn>
-            </div></v-card-title
-          >
-          <v-divider inset></v-divider>
-          <v-card-title>
-            <div class="d-flex justify-space-between">
-              April 21 | Jury
-              <v-banner-text color="darkB"> TODAY! </v-banner-text>
-              <v-btn color="primary" @click="goSignUp()"> Sign Up </v-btn>
-            </div></v-card-title
-          > -->
         </v-card>
       </v-col>
     </v-row>
@@ -96,6 +120,7 @@ import EventDataService from "../../services/EventDataService";
 import SemesterDataService from "../../services/SemesterDataService";
 import UserRoleDataService from "../../services/UserRoleDataService";
 import StudentSignUpPopUp from "./StudentSignUpPopUp.vue";
+import StudentInstrumentDataService from "../../services/StudentInstrumentDataService";
 import Utils from "../../config/utils";
 export default {
   name: "StudentHome",
@@ -104,13 +129,25 @@ export default {
     events: [],
     eventId: null,
     id: {},
+    initials: "",
     semester: {},
     showDialog: false,
     user: {},
     userRole: {},
+    studentInstruments: [],
   }),
   async created() {},
   methods: {
+    async getInstrumnentData() {
+      StudentInstrumentDataService.getByUser(this.user.userId)
+        .then((response) => {
+          this.studentInstruments = response.data;
+          console.log(this.studentInstruments);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    },
     compareDates(input) {
       const today = new Date();
       const todayString = `${today.getFullYear()}-${(today.getMonth() + 1)
@@ -134,6 +171,9 @@ export default {
         day: "numeric",
         timeZone: "UTC",
       });
+    },
+    viewStuRep() {
+      this.$router.push({ path: "studentRepertoire" });
     },
     viewCrit() {
       // Utils.setStore("eventId", id);
@@ -182,6 +222,7 @@ export default {
     },
     async getUserRole() {
       this.user = Utils.getStore("user");
+      console.log(this.user);
       await UserRoleDataService.getRolesForUser(this.user.userId)
         .then((response) => {
           this.userRole = response.data.find((obj) => {
@@ -198,6 +239,7 @@ export default {
     await this.getCurrentSemester();
     await this.getEvents();
     await this.getUserRole();
+    await this.getInstrumnentData();
   },
   components: { StudentSignUpPopUp },
 };
