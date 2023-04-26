@@ -20,9 +20,9 @@
             </v-card-title>
             <v-divider></v-divider>
             <!-- How get major -->
-            <v-card-text v-if="user.stuMajor">
+            <!-- <v-card-text v-if="user.stuMajor">
               {{ "Major: " + studentInstruments.student.stuMajor }}
-            </v-card-text>
+            </v-card-text> -->
             <!-- How get student classificartion -->
             <!-- <v-card-text v-if="">
               {{ "Student Classification: " + studentInstruments.student.stuClassification }}
